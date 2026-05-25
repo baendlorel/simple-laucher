@@ -1,7 +1,7 @@
 {
   "configuration.title": "简易运行器",
   "command.menu.title": "命令面板",
-  "command.menu.import-commands": "从受支持的配置文件（如 package.json 和 Cargo.toml）导入命令",
+  "command.import-commands.title": "从受支持的配置文件（如 package.json 和 Cargo.toml）导入命令",
   "extension.category": "简易运行器",
   "configuration.load-from.description": "从受支持的项目文件中加载命令。",
   "configuration.load-from.package-json.description": "从 package.json 的 scripts 字段读取命令。scripts 的键会作为 displayName，值会作为 command。",
@@ -9,5 +9,6 @@
   "configuration.custom-commands.description": "手动定义的附加命令。",
   "configuration.custom-commands.command.description": "要执行的命令。",
   "configuration.custom-commands.displayName.description": "在界面中显示的名称。未提供时将直接使用 command。",
-  "configuration.custom-commands.monitorTarget.description": "要监控的进程名或正则表达式字符串。未提供时将禁用监控。"
+  "configuration.custom-commands.monitorTarget.description": "要监控的进程名或正则表达式字符串。未提供时将禁用监控。",
+  "configuration.custom-commands.cwd.description": "执行命令时使用的工作目录。"
 }

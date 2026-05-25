@@ -1,5 +1,6 @@
 import vscode from 'vscode';
 import { inspect } from 'node:util';
+import type { CommandName } from '@/types/global.js';
 
 export const $info = vscode.window.showInformationMessage;
 export const $err = vscode.window.showErrorMessage;

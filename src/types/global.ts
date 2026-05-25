@@ -21,3 +21,13 @@ export type FullCommandName = `simple-launcher.${CommandName}`;
 declare global {
   const __IS_DEV__: boolean;
 }
+
+declare module 'vscode' {
+  export namespace commands {
+    export function registerCommand(
+      command: FullCommandName,
+      callback: (...args: any[]) => any,
+      thisArg?: any,
+    ): Disposable;
+  }
+}

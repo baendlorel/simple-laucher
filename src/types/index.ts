@@ -19,6 +19,11 @@ export interface CommandConfig {
    */
   command: string;
 
+  /**
+   * The working directory for the command. It can be passed to execSync options.cwd.
+   */
+  cwd?: string;
+
   from?: 'package.json' | 'Cargo.toml';
 }
 

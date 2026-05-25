@@ -1,7 +1,7 @@
 {
   "configuration.title": "Simple Launcher",
   "command.menu.title": "Command Menu",
-  "command.menu.import-commands": "Import Commands from supported config files like package.json and Cargo.toml",
+  "command.import-commands.title": "Import Commands from supported config files like package.json and Cargo.toml",
   "extension.category": "Simple Launcher",
   "configuration.load-from.description": "Load commands from supported project files.",
   "configuration.load-from.package-json.description": "Read commands from the scripts field in package.json. The script key is used as displayName, and the script value is used as command.",
@@ -9,5 +9,6 @@
   "configuration.custom-commands.description": "Additional commands defined manually.",
   "configuration.custom-commands.command.description": "The command to execute.",
   "configuration.custom-commands.displayName.description": "The display name shown in the UI. If omitted, the command itself is used.",
-  "configuration.custom-commands.monitorTarget.description": "The process name or regex pattern string to monitor. If omitted, monitoring is disabled."
+  "configuration.custom-commands.monitorTarget.description": "The process name or regex pattern string to monitor. If omitted, monitoring is disabled.",
+  "configuration.custom-commands.cwd.description": "The working directory used when executing the command."
 }

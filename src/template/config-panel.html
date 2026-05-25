@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Launcher Commands</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        color: var(--vscode-foreground);
+        background: var(--vscode-editor-background);
+        font-family: var(--vscode-font-family);
+        font-size: var(--vscode-font-size);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 0 16px;
+        background: var(--vscode-editor-background);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      h2 {
+        margin: 24px 0 12px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .save {
+        border: 0;
+        border-radius: 4px;
+        padding: 8px 14px;
+        color: var(--vscode-button-foreground);
+        background: var(--vscode-button-background);
+        cursor: pointer;
+      }
+
+      .save:hover {
+        background: var(--vscode-button-hoverBackground);
+      }
+
+      .status {
+        min-height: 18px;
+        color: var(--vscode-descriptionForeground);
+        font-size: 12px;
+      }
+
+      details {
+        margin-bottom: 10px;
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 6px;
+        background: var(--vscode-sideBar-background);
+      }
+
+      summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .summary-meta {
+        color: var(--vscode-descriptionForeground);
+        font-size: 12px;
+        font-weight: 400;
+      }
+
+      .import-body {
+        border-top: 1px solid var(--vscode-panel-border);
+        padding: 12px 14px 14px;
+      }
+
+      .import-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .secondary,
+      .danger {
+        border: 1px solid var(--vscode-button-border, transparent);
+        border-radius: 4px;
+        padding: 6px 10px;
+        color: var(--vscode-button-secondaryForeground);
+        background: var(--vscode-button-secondaryBackground);
+        cursor: pointer;
+      }
+
+      .secondary:hover,
+      .danger:hover {
+        background: var(--vscode-button-secondaryHoverBackground);
+      }
+
+      .danger {
+        color: var(--vscode-errorForeground);
+      }
+
+      .primary {
+        border: 0;
+        border-radius: 4px;
+        padding: 6px 12px;
+        color: var(--vscode-button-foreground);
+        background: var(--vscode-button-background);
+        cursor: pointer;
+      }
+
+      .primary:hover {
+        background: var(--vscode-button-hoverBackground);
+      }
+
+      .candidate-list,
+      .command-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .candidate {
+        display: grid;
+        grid-template-columns: 24px minmax(160px, 0.8fr) minmax(160px, 0.8fr) minmax(220px, 1.4fr);
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 4px;
+        background: var(--vscode-editor-background);
+      }
+
+      .candidate input[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+      }
+
+      .file,
+      .candidate-command {
+        overflow: hidden;
+        color: var(--vscode-descriptionForeground);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .candidate-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .empty {
+        padding: 12px;
+        border: 1px dashed var(--vscode-panel-border);
+        border-radius: 4px;
+        color: var(--vscode-descriptionForeground);
+      }
+
+      .error {
+        margin-bottom: 10px;
+        color: var(--vscode-errorForeground);
+      }
+
+      .command-row {
+        display: grid;
+        grid-template-columns: minmax(140px, 0.9fr) minmax(240px, 1.4fr) minmax(140px, 0.9fr) 36px;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .command-row input {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid var(--vscode-input-border, transparent);
+        border-radius: 4px;
+        padding: 7px 8px;
+        color: var(--vscode-input-foreground);
+        background: var(--vscode-input-background);
+      }
+
+      .command-row input:focus {
+        outline: 1px solid var(--vscode-focusBorder);
+        outline-offset: -1px;
+      }
+
+      .remove {
+        width: 36px;
+        height: 32px;
+        padding: 0;
+      }
+
+      .header-row {
+        display: grid;
+        grid-template-columns: minmax(140px, 0.9fr) minmax(240px, 1.4fr) minmax(140px, 0.9fr) 36px;
+        gap: 8px;
+        margin-bottom: 6px;
+        color: var(--vscode-descriptionForeground);
+        font-size: 12px;
+      }
+
+      @media (max-width: 720px) {
+        body {
+          padding: 14px;
+        }
+
+        .toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .candidate,
+        .command-row,
+        .header-row {
+          grid-template-columns: 1fr;
+        }
+
+        .candidate {
+          grid-template-columns: 24px 1fr;
+        }
+
+        .candidate .file,
+        .candidate .candidate-command {
+          grid-column: 2;
+        }
+
+        .header-row {
+          display: none;
+        }
+
+        .remove {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="toolbar">
+        <div>
+          <h1>Simple Launcher Commands</h1>
+          <div id="status" class="status"></div>
+        </div>
+        <button id="save" class="save" type="button">Save (Ctrl+S)</button>
+      </div>
+
+      <section id="imports"></section>
+
+      <section>
+        <h2>Commands</h2>
+        <div class="header-row" aria-hidden="true">
+          <div>displayName</div>
+          <div>command</div>
+          <div>monitorTarget</div>
+          <div></div>
+        </div>
+        <div id="commands" class="command-list"></div>
+      </section>
+    </main>
+
+    <script nonce="{{nonce}}">
+      const vscode = acquireVsCodeApi();
+      const state = {{initialState}};
+      const importsEl = document.getElementById('imports');
+      const commandsEl = document.getElementById('commands');
+      const saveEl = document.getElementById('save');
+      const statusEl = document.getElementById('status');
+
+      let commands = Array.isArray(state.commands) ? state.commands : [];
+
+      const setStatus = (text) => {
+        statusEl.textContent = text;
+      };
+
+      const sourceTitle = (source) => `Import from ${source}`;
+
+      const getSourceSelectedIds = (source) =>
+        [...document.querySelectorAll(`input[data-source="${source}"]:checked`)].map((input) => input.value);
+
+      const renderImports = () => {
+        importsEl.innerHTML = '';
+
+        for (const group of state.sources) {
+          const details = document.createElement('details');
+          details.dataset.source = group.source;
+
+          const summary = document.createElement('summary');
+          const title = document.createElement('span');
+          const meta = document.createElement('span');
+          title.textContent = sourceTitle(group.source);
+          meta.className = 'summary-meta';
+          meta.textContent = `${group.commands.length} found`;
+          summary.append(title, meta);
+
+          const body = document.createElement('div');
+          body.className = 'import-body';
+
+          if (group.error) {
+            const error = document.createElement('div');
+            error.className = 'error';
+            error.textContent = group.error;
+            body.append(error);
+          }
+
+          if (group.commands.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = `No commands found in ${group.source}.`;
+            body.append(empty);
+          } else {
+            const actions = document.createElement('div');
+            actions.className = 'import-actions';
+
+            const selectAll = document.createElement('button');
+            selectAll.type = 'button';
+            selectAll.className = 'secondary';
+            selectAll.textContent = 'Select all';
+            selectAll.addEventListener('click', () => {
+              document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
+                input.checked = true;
+              });
+            });
+
+            const clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'secondary';
+            clear.textContent = 'Clear';
+            clear.addEventListener('click', () => {
+              document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
+                input.checked = false;
+              });
+            });
+
+            const confirm = document.createElement('button');
+            confirm.type = 'button';
+            confirm.className = 'primary';
+            confirm.textContent = 'Import selected';
+            confirm.addEventListener('click', () => {
+              const selected = new Set(getSourceSelectedIds(group.source));
+              const imports = group.commands
+                .filter((command) => selected.has(command.id))
+                .map(({ id, sourceFile, ...command }) => command);
+
+              if (imports.length === 0) {
+                setStatus('No commands selected.');
+                return;
+              }
+
+              commands = [...commands, ...imports];
+              details.open = false;
+              renderCommands();
+              setStatus(`${imports.length} command${imports.length === 1 ? '' : 's'} imported.`);
+            });
+
+            actions.append(selectAll, clear, confirm);
+            body.append(actions);
+
+            const list = document.createElement('div');
+            list.className = 'candidate-list';
+
+            for (const candidate of group.commands) {
+              const row = document.createElement('label');
+              row.className = 'candidate';
+
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.value = candidate.id;
+              checkbox.dataset.source = group.source;
+
+              const file = document.createElement('div');
+              file.className = 'file';
+              file.title = candidate.sourceFile;
+              file.textContent = candidate.sourceFile;
+
+              const name = document.createElement('div');
+              name.className = 'candidate-name';
+              name.title = candidate.displayName || '';
+              name.textContent = candidate.displayName || '';
+
+              const command = document.createElement('div');
+              command.className = 'candidate-command';
+              command.title = candidate.command;
+              command.textContent = candidate.command;
+
+              row.append(checkbox, file, name, command);
+              list.append(row);
+            }
+
+            body.append(list);
+          }
+
+          details.append(summary, body);
+          importsEl.append(details);
+        }
+      };
+
+      const updateCommand = (index, key, value) => {
+        commands[index] = {
+          ...commands[index],
+          [key]: value,
+        };
+      };
+
+      const renderCommands = () => {
+        commandsEl.innerHTML = '';
+
+        if (commands.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = 'No commands configured.';
+          commandsEl.append(empty);
+          return;
+        }
+
+        commands.forEach((command, index) => {
+          const row = document.createElement('div');
+          row.className = 'command-row';
+
+          const displayName = document.createElement('input');
+          displayName.placeholder = 'displayName';
+          displayName.value = command.displayName || '';
+          displayName.addEventListener('input', () => updateCommand(index, 'displayName', displayName.value));
+
+          const commandInput = document.createElement('input');
+          commandInput.placeholder = 'command';
+          commandInput.value = command.command || '';
+          commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
+
+          const monitorTarget = document.createElement('input');
+          monitorTarget.placeholder = 'monitorTarget';
+          monitorTarget.value = command.monitorTarget || '';
+          monitorTarget.addEventListener('input', () => updateCommand(index, 'monitorTarget', monitorTarget.value));
+
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'danger remove';
+          remove.title = 'Remove command';
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            commands = commands.filter((_, commandIndex) => commandIndex !== index);
+            renderCommands();
+          });
+
+          row.append(displayName, commandInput, monitorTarget, remove);
+          commandsEl.append(row);
+        });
+      };
+
+      const save = () => {
+        vscode.postMessage({
+          type: 'save',
+          commands,
+        });
+        setStatus('Saving...');
+      };
+
+      saveEl.addEventListener('click', save);
+
+      window.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          save();
+        }
+      });
+
+      window.addEventListener('message', (event) => {
+        if (event.data?.type !== 'saved') {
+          return;
+        }
+
+        commands = event.data.commands;
+        renderCommands();
+        setStatus('Saved.');
+      });
+
+      renderImports();
+      renderCommands();
+    </script>
+  </body>
+</html>

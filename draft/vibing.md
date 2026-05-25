@@ -18,3 +18,11 @@
 9. 每一条命令都有三个输入框，一个显示displayName、一个显示command、一个显示monitorTarget。用户可以修改这些内容，按ctrl+s可以保存。并且顶部也有蓝色的保存按钮，写着"Save (Ctrl+S)"。
 10. 保存后这些内容会调用config里的save进行保存。
 11. panel的模板使用src/template/config-panel.html。
+12. 设置代码部分主要写在config.ts
+
+==
+更新需求：
+1、不再扫描pnpm workspace了，而是直接扫描子包的package.json文件来获取命令信息。获取到之后同时记录它的路径，并为CommandConfig添加一个字段叫cwd，用于传入execSync参数；
+2、直接进入子包扫描的时候，需要注意不要进入node_modules等不相关的目录；
+3、当不存在时建议有意识返回null而不是undefined。
+4、types里的类型文件直接用ts写，不要再用d.ts了。

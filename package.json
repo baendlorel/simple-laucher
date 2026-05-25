@@ -50,7 +50,7 @@
       },
       {
         "command": "simple-launcher.import-commands",
-        "title": "%command.menu.import-commands%"
+        "title": "%command.import-commands.title%"
       }
     ],
     "configuration": {
@@ -91,6 +91,10 @@
               "monitorTarget": {
                 "type": "string",
                 "description": "%configuration.custom-commands.monitorTarget.description%"
+              },
+              "cwd": {
+                "type": "string",
+                "description": "%configuration.custom-commands.cwd.description%"
               }
             },
             "required": [

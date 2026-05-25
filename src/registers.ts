@@ -1,13 +1,11 @@
-import type { ConfigName, CommandName, Fn } from './types/global.js';
-import { commands, workspace, ExtensionContext, ConfigurationChangeEvent } from 'vscode';
-import { errorPop } from './lib/native.js';
-import { vscodeCommand, statusBarItem } from './core/menu.js';
+import vscode from 'vscode';
+import { marker, openMenu } from './core/menu.js';
+import { openImportCommandsPanel } from './lib/config.js';
 
-const changed = (e: ConfigurationChangeEvent, ...names: ConfigName[]) =>
-  names.some((name) => e.affectsConfiguration(`simple-launcher.${name}`));
-
-const cmd = (c: CommandName, cb: Fn) => commands.registerCommand(`simple-launcher.${c}`, cb);
-
-export default (context: ExtensionContext) => {
-  context.subscriptions.push(vscodeCommand, statusBarItem);
+export default (context: vscode.ExtensionContext) => {
+  context.subscriptions.push(
+    marker,
+    vscode.commands.registerCommand('simple-launcher.menu', openMenu),
+    vscode.commands.registerCommand('simple-launcher.menu', () => openImportCommandsPanel(context)),
+  );
 };

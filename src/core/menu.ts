@@ -3,15 +3,13 @@ import vscode from 'vscode';
 import { load } from '@/lib/config.js';
 import { t } from '@/lib/l10n.js';
 
-export const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+export const marker = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
-const MENU_CMD = 'simple-launcher.menu' satisfies FullCommandName;
+marker.text = '$(debug-start) ' + t('status-bar.text');
+marker.command = 'simple-launcher.menu' satisfies FullCommandName;
+marker.show();
 
-statusBarItem.text = '$(debug-start) ';
-statusBarItem.command = MENU_CMD;
-statusBarItem.show();
-
-export const vscodeCommand = vscode.commands.registerCommand(MENU_CMD, async () => {
+export const openMenu = async () => {
   const simpleLaunchCommands = await load();
   const result = await vscode.window.showQuickPick(
     simpleLaunchCommands.map((item, i) => {
@@ -40,4 +38,4 @@ export const vscodeCommand = vscode.commands.registerCommand(MENU_CMD, async () 
 
   const cmd = simpleLaunchCommands[result.index];
   vscode.window.showInformationMessage(`You selected: ${cmd.command}`);
-});
+};
