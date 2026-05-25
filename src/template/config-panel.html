@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src 'nonce-{{nonce}}';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src '__cspSource__' 'unsafe-inline'; script-src 'nonce-{{nonce}}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>"__config-panel.title__"</title>
   <style>
@@ -292,10 +292,9 @@
     </section>
   </main>
 
-  <script nonce="{{nonce}}">
+  <script nonce="__nonce__">
     const vscode = acquireVsCodeApi();
-    const state = {{initialState}};
-    const labels = {{labels}};
+    const state = '__initialState__';
     const importsEl = document.getElementById('imports');
     const commandsEl = document.getElementById('commands');
     const saveEl = document.getElementById('save');
@@ -310,8 +309,7 @@
     const format = (template, ...args) =>
       args.reduce((text, arg, index) => text.replace(`{${index}}`, String(arg)), template);
 
-    const label = (key) => labels[key] || key;
-    const sourceTitle = (source) => format(label('config-panel.import-from'), source);
+    const sourceTitle = (source) => format('__config-panel.import-from__', source);
 
     const getSourceSelectedIds = (source) =>
       [...document.querySelectorAll(`input[data-source="${source}"]:checked`)].map((input) => input.value);
@@ -329,7 +327,7 @@
         const meta = document.createElement('span');
         title.textContent = sourceTitle(group.source);
         meta.className = 'summary-meta';
-        meta.textContent = format(label('config-panel.found'), group.commands.length);
+        meta.textContent = format('__config-panel.found__', group.commands.length);
         summary.append(title, meta);
 
         const body = document.createElement('div');
@@ -345,7 +343,7 @@
         if (group.commands.length === 0) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.textContent = format(label('config-panel.no-commands-found'), group.source);
+          empty.textContent = format('__config-panel.no-commands-found__', group.source);
           body.append(empty);
         } else {
           const actions = document.createElement('div');
@@ -354,7 +352,7 @@
           const selectAll = document.createElement('button');
           selectAll.type = 'button';
           selectAll.className = 'secondary';
-          selectAll.textContent = label('config-panel.select-all');
+          selectAll.textContent = '__config-panel.select-all__';
           selectAll.addEventListener('click', () => {
             document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
               input.checked = true;
@@ -364,7 +362,7 @@
           const clear = document.createElement('button');
           clear.type = 'button';
           clear.className = 'secondary';
-          clear.textContent = label('config-panel.clear');
+          clear.textContent = '__config-panel.clear__';
           clear.addEventListener('click', () => {
             document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
               input.checked = false;
@@ -374,7 +372,7 @@
           const confirm = document.createElement('button');
           confirm.type = 'button';
           confirm.className = 'primary';
-          confirm.textContent = label('config-panel.import-selected');
+          confirm.textContent = '__config-panel.import-selected__';
           confirm.addEventListener('click', () => {
             const selected = new Set(getSourceSelectedIds(group.source));
             const imports = group.commands
@@ -382,14 +380,14 @@
               .map(({ id, sourceFile, ...command }) => command);
 
             if (imports.length === 0) {
-              setStatus(label('config-panel.no-commands-selected'));
+              setStatus('__config-panel.no-commands-selected__');
               return;
             }
 
             commands = [...commands, ...imports];
             details.open = false;
             renderCommands();
-            setStatus(format(label('config-panel.imported'), imports.length));
+            setStatus(format('__config-panel.imported__', imports.length));
           });
 
           actions.append(selectAll, clear, confirm);
@@ -447,7 +445,7 @@
       if (commands.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty';
-        empty.textContent = label('config-panel.no-commands-configured');
+        empty.textContent = '__config-panel.no-commands-configured__';
         commandsEl.append(empty);
         return;
       }
@@ -457,24 +455,24 @@
         row.className = 'command-row';
 
         const displayName = document.createElement('input');
-        displayName.placeholder = label('config-panel.display-name');
+        displayName.placeholder = '__config-panel.display-name__';
         displayName.value = command.displayName || '';
         displayName.addEventListener('input', () => updateCommand(index, 'displayName', displayName.value));
 
         const commandInput = document.createElement('input');
-        commandInput.placeholder = label('config-panel.command');
+        commandInput.placeholder = '__config-panel.command__';
         commandInput.value = command.command || '';
         commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
 
         const monitorTarget = document.createElement('input');
-        monitorTarget.placeholder = label('config-panel.monitor-target');
+        monitorTarget.placeholder = '__config-panel.monitor-target__';
         monitorTarget.value = command.monitorTarget || '';
         monitorTarget.addEventListener('input', () => updateCommand(index, 'monitorTarget', monitorTarget.value));
 
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'danger remove';
-        remove.title = label('config-panel.remove-command');
+        remove.title = '__config-panel.remove-command__';
         remove.textContent = '×';
         remove.addEventListener('click', () => {
           commands = commands.filter((_, commandIndex) => commandIndex !== index);
@@ -491,7 +489,7 @@
         type: 'save',
         commands,
       });
-      setStatus(label('config-panel.saving'));
+      setStatus('__config-panel.saving__');
     };
 
     saveEl.addEventListener('click', save);
@@ -510,7 +508,7 @@
 
       commands = event.data.commands;
       renderCommands();
-      setStatus(label('config-panel.saved'));
+      setStatus('__config-panel.saved__');
     });
 
     renderImports();

@@ -42,34 +42,6 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-const configPanelLabelKeys = [
-  'config-panel.title',
-  'config-panel.save',
-  'config-panel.commands',
-  'config-panel.display-name',
-  'config-panel.command',
-  'config-panel.monitor-target',
-  'config-panel.monitor-target.help',
-  'config-panel.import-from',
-  'config-panel.found',
-  'config-panel.no-commands-found',
-  'config-panel.select-all',
-  'config-panel.clear',
-  'config-panel.import-selected',
-  'config-panel.no-commands-selected',
-  'config-panel.imported',
-  'config-panel.no-commands-configured',
-  'config-panel.remove-command',
-  'config-panel.saving',
-  'config-panel.saved',
-] as const;
-
-const getConfigPanelLabels = () =>
-  Object.fromEntries(configPanelLabelKeys.map((key) => [key, t(key)])) as Record<(typeof configPanelLabelKeys)[number], string>;
-
-const replaceTemplateLabels = (html: string) =>
-  html.replace(/"__([a-z-.]+)__"/g, (_, key: Parameters<typeof t>[0]) => escapeHtml(t(key)));
-
 const getNonce = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let nonce = '';
@@ -250,8 +222,6 @@ const getImportSource = async (
   }
 };
 
-const getCurrentCustomCommands = () => config().get<CommandConfig[]>('custom-commands', []);
-
 const getImportPanelState = async () => {
   const sources = [
     await getImportSource('package.json', getPackageJsonCandidates),
@@ -259,7 +229,7 @@ const getImportPanelState = async () => {
   ].filter((group) => group.commands.length > 0 || group.error);
 
   return {
-    commands: getCurrentCustomCommands(),
+    commands: load(),
     sources,
   };
 };
@@ -274,10 +244,9 @@ const serializeCommands = (commands: CommandConfig[]) =>
   }));
 
 export const openImportCommandsPanel = async (context: vscode.ExtensionContext) => {
-  const labels = getConfigPanelLabels();
   const panel = vscode.window.createWebviewPanel(
     'simpleLauncherImportCommands',
-    labels['config-panel.title'],
+    t('config-panel.title'),
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -287,11 +256,11 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
 
   const nonce = getNonce();
   const state = await getImportPanelState();
-  panel.webview.html = replaceTemplateLabels(configPanelTemplate)
-    .replaceAll('{{nonce}}', nonce)
-    .replaceAll('{{cspSource}}', panel.webview.cspSource)
-    .replace('{{labels}}', serializeStateForScript(labels))
-    .replace('{{initialState}}', serializeStateForScript(state));
+  panel.webview.html = configPanelTemplate
+    .replace(/['"]__([a-z-.]+)__['"]/g, (_, key) => escapeHtml(t(key)))
+    .replaceAll('__nonce__', nonce)
+    .replaceAll(`__cspSource__`, panel.webview.cspSource)
+    .replace(`'__initialState__'`, serializeStateForScript(state));
 
   panel.webview.onDidReceiveMessage(
     async (message: { type?: string; commands?: CommandConfig[] }) => {
@@ -309,9 +278,7 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
   );
 };
 
-export const load = async () => {
-  return getCurrentCustomCommands();
-};
+export const load = () => config().get<CommandConfig[]>('custom-commands', []);
 
 export const save = (commands: CommandConfig[], configurationTarget = vscode.ConfigurationTarget.Workspace) => {
   return config().update('custom-commands', commands, configurationTarget);
