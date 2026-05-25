@@ -118,6 +118,7 @@
   },
   "dependencies": {
     "@types/vscode": "1.74.0",
-    "is-wsl": "^3.1.1"
+    "is-wsl": "^3.1.1",
+    "smol-toml": "^1.6.1"
   }
 }
