@@ -6,6 +6,6 @@ export default (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
     marker,
     vscode.commands.registerCommand('simple-launcher.menu', openMenu),
-    vscode.commands.registerCommand('simple-launcher.menu', () => openImportCommandsPanel(context)),
+    vscode.commands.registerCommand('simple-launcher.import-commands', () => openImportCommandsPanel(context)),
   );
 };
