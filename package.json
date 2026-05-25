@@ -1,0 +1,123 @@
+{
+  "name": "simple-launcher",
+  "displayName": "Simple Launcher",
+  "description": "A tool that helps you quickly launch commands while monitoring program memory usage",
+  "description_zh": "一个可以帮助你快速启动命令的工具，同时可以监控程序内存用量",
+  "version": "0.1.0",
+  "purpose": "vscode-extension",
+  "publisher": "KasukabeTsumugi",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "author": {
+    "email": "futami16237@gmail.com",
+    "name": "Kasukabe Tsumugi"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "titlebar",
+    "color",
+    "theme",
+    "project",
+    "workspace",
+    "customization"
+  ],
+  "homepage": "https://github.com/baendlorel/simple-launcher#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baendlorel/simple-launcher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/simple-launcher/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": [
+    "ui"
+  ],
+  "contributes": {
+    "commands": [],
+    "configuration": {
+      "title": "%configuration.title%",
+      "properties": {
+        "simple-launcher.load-from": {
+          "type": "array",
+          "default": true,
+          "description": "%configuration.load-package-json.description%",
+          "items": {
+            "type": "string",
+            "enum": [
+              "package.json",
+              "Cargo.toml"
+            ],
+            "enumDescriptions": [
+              "%configuration.load-from.package-json.description%",
+              "%configuration.load-from.cargo-toml.description%"
+            ],
+            "description": "Command source file type"
+          }
+        },
+        "simple-launcher.custom-commands": {
+          "type": "array",
+          "default": [],
+          "description": "%configuration.custom-commands.description%",
+          "items": {
+            "type": "object",
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "%configuration.custom-commands.command.description%"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "%configuration.custom-commands.displayName.description%"
+              },
+              "monitorTarget": {
+                "type": "string",
+                "description": "%configuration.custom-commands.monitorTarget.description%"
+              }
+            },
+            "required": [
+              "command"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lines": "clear && find ./src -type f \\( -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.mjs\" -o -name \"*.cjs\" -o -name \"*.cpp\" -o -name \"*.h\" -o -name \"*.py\"  -o -name \"*.css\" -o -name \"*.rs\" -o -name \"*.rc\" \\) | xargs wc -l",
+    "test-build": "vite build --mode development",
+    "build": "vite build",
+    "watch": "vite build --watch --mode development",
+    "check": "tsc --noEmit -p tsconfig.build.json",
+    "lint": "oxlint .",
+    "pub": "vsce package -o ./bin --no-dependencies",
+    "publish": "pnpm build && vsce publish"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
+    "@types/node": "^25.9.0",
+    "@vscode/vsce": "^3.9.1",
+    "oxlint": "^1.66.0",
+    "tslib": "^2.8.1",
+    "typescript": "^6.0.3",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@types/vscode": "1.74.0",
+    "is-wsl": "^3.1.1"
+  }
+}
