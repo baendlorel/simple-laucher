@@ -55,7 +55,7 @@
       "properties": {
         "simple-launcher.load-from": {
           "type": "array",
-          "default": true,
+          "default": [],
           "description": "%configuration.load-from.description%",
           "items": {
             "type": "string",

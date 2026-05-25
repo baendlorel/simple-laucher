@@ -1,6 +1,7 @@
 import type { FullCommandName } from '@/types/global.js';
 import vscode from 'vscode';
 import { load } from '@/lib/config.js';
+import { t } from '@/lib/l10n.js';
 
 export const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
@@ -13,10 +14,6 @@ statusBarItem.show();
 export const vscodeCommand = vscode.commands.registerCommand(MENU_CMD, async () => {
   const simpleLaunchCommands = await load();
   const result = await vscode.window.showQuickPick(
-    //   [
-    //   { label: 'Option 1', description: 'Do something', detail: JSON.stringify(simpleLaunchCommands) },
-    //   { label: 'Option 2', description: 'Do something else' },
-    // ]
     simpleLaunchCommands.map((item, i) => {
       if (item.displayName) {
         return {
@@ -32,6 +29,9 @@ export const vscodeCommand = vscode.commands.registerCommand(MENU_CMD, async () 
         detail: `Monitor target ${item.monitorTarget ?? 'N/A'}`,
       };
     }),
+    {
+      title: t('menu.title'),
+    },
   );
 
   if (!result) {

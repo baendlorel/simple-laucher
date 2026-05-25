@@ -62,6 +62,8 @@ const loadFromCargoToml = async (root: vscode.WorkspaceFolder | undefined) => {
 
 export const load = async () => {
   const loadFrom = config().get<LoadFrom[]>('load-from', []);
+  vscode.window.showInformationMessage(`Loading commands from: ${typeof loadFrom} ${Array.isArray(loadFrom)}`);
+
   const commands = config().get<CommandConfig[]>('custom-commands', []);
   if (loadFrom.includes('package.json')) {
     const arr = await loadFromPackageJson(vscode.workspace.workspaceFolders?.[0]);
