@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src 'nonce-{{nonce}}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{panelTitle}}</title>
+  <title>"__config-panel.title__"</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -271,21 +271,21 @@
   <main class="page">
     <div class="toolbar">
       <div>
-        <h1>{{panelTitle}}</h1>
+        <h1>"__config-panel.title__"</h1>
         <div id="status" class="status"></div>
       </div>
-      <button id="save" class="save" type="button">{{save}}</button>
+      <button id="save" class="save" type="button">"__config-panel.save__"</button>
     </div>
 
     <section id="imports"></section>
 
     <section>
-      <h2>{{commands}}</h2>
-      <div class="status">{{monitorTargetHelp}}</div>
+      <h2>"__config-panel.commands__"</h2>
+      <div class="status">"__config-panel.monitor-target.help__"</div>
       <div class="header-row" aria-hidden="true">
-        <div>{{displayName}}</div>
-        <div>{{command}}</div>
-        <div>{{monitorTarget}}</div>
+        <div>"__config-panel.display-name__"</div>
+        <div>"__config-panel.command__"</div>
+        <div>"__config-panel.monitor-target__"</div>
         <div></div>
       </div>
       <div id="commands" class="command-list"></div>
@@ -310,7 +310,8 @@
     const format = (template, ...args) =>
       args.reduce((text, arg, index) => text.replace(`{${index}}`, String(arg)), template);
 
-    const sourceTitle = (source) => format(labels.importFrom, source);
+    const label = (key) => labels[key] || key;
+    const sourceTitle = (source) => format(label('config-panel.import-from'), source);
 
     const getSourceSelectedIds = (source) =>
       [...document.querySelectorAll(`input[data-source="${source}"]:checked`)].map((input) => input.value);
@@ -328,7 +329,7 @@
         const meta = document.createElement('span');
         title.textContent = sourceTitle(group.source);
         meta.className = 'summary-meta';
-        meta.textContent = format(labels.found, group.commands.length);
+        meta.textContent = format(label('config-panel.found'), group.commands.length);
         summary.append(title, meta);
 
         const body = document.createElement('div');
@@ -344,7 +345,7 @@
         if (group.commands.length === 0) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.textContent = format(labels.noCommandsFound, group.source);
+          empty.textContent = format(label('config-panel.no-commands-found'), group.source);
           body.append(empty);
         } else {
           const actions = document.createElement('div');
@@ -353,7 +354,7 @@
           const selectAll = document.createElement('button');
           selectAll.type = 'button';
           selectAll.className = 'secondary';
-          selectAll.textContent = labels.selectAll;
+          selectAll.textContent = label('config-panel.select-all');
           selectAll.addEventListener('click', () => {
             document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
               input.checked = true;
@@ -363,7 +364,7 @@
           const clear = document.createElement('button');
           clear.type = 'button';
           clear.className = 'secondary';
-          clear.textContent = labels.clear;
+          clear.textContent = label('config-panel.clear');
           clear.addEventListener('click', () => {
             document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
               input.checked = false;
@@ -373,7 +374,7 @@
           const confirm = document.createElement('button');
           confirm.type = 'button';
           confirm.className = 'primary';
-          confirm.textContent = labels.importSelected;
+          confirm.textContent = label('config-panel.import-selected');
           confirm.addEventListener('click', () => {
             const selected = new Set(getSourceSelectedIds(group.source));
             const imports = group.commands
@@ -381,14 +382,14 @@
               .map(({ id, sourceFile, ...command }) => command);
 
             if (imports.length === 0) {
-              setStatus(labels.noCommandsSelected);
+              setStatus(label('config-panel.no-commands-selected'));
               return;
             }
 
             commands = [...commands, ...imports];
             details.open = false;
             renderCommands();
-            setStatus(format(labels.imported, imports.length));
+            setStatus(format(label('config-panel.imported'), imports.length));
           });
 
           actions.append(selectAll, clear, confirm);
@@ -446,7 +447,7 @@
       if (commands.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty';
-        empty.textContent = labels.noCommandsConfigured;
+        empty.textContent = label('config-panel.no-commands-configured');
         commandsEl.append(empty);
         return;
       }
@@ -456,24 +457,24 @@
         row.className = 'command-row';
 
         const displayName = document.createElement('input');
-        displayName.placeholder = labels.displayName;
+        displayName.placeholder = label('config-panel.display-name');
         displayName.value = command.displayName || '';
         displayName.addEventListener('input', () => updateCommand(index, 'displayName', displayName.value));
 
         const commandInput = document.createElement('input');
-        commandInput.placeholder = labels.command;
+        commandInput.placeholder = label('config-panel.command');
         commandInput.value = command.command || '';
         commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
 
         const monitorTarget = document.createElement('input');
-        monitorTarget.placeholder = labels.monitorTarget;
+        monitorTarget.placeholder = label('config-panel.monitor-target');
         monitorTarget.value = command.monitorTarget || '';
         monitorTarget.addEventListener('input', () => updateCommand(index, 'monitorTarget', monitorTarget.value));
 
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'danger remove';
-        remove.title = labels.removeCommand;
+        remove.title = label('config-panel.remove-command');
         remove.textContent = '×';
         remove.addEventListener('click', () => {
           commands = commands.filter((_, commandIndex) => commandIndex !== index);
@@ -490,7 +491,7 @@
         type: 'save',
         commands,
       });
-      setStatus(labels.saving);
+      setStatus(label('config-panel.saving'));
     };
 
     saveEl.addEventListener('click', save);
@@ -509,7 +510,7 @@
 
       commands = event.data.commands;
       renderCommands();
-      setStatus(labels.saved);
+      setStatus(label('config-panel.saved'));
     });
 
     renderImports();

@@ -42,30 +42,33 @@ const escapeHtml = (value: string) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-const getConfigPanelLabels = () => ({
-  panelTitle: t('config-panel.title'),
-  save: t('config-panel.save'),
-  commands: t('config-panel.commands'),
-  displayName: t('config-panel.display-name'),
-  command: t('config-panel.command'),
-  monitorTarget: t('config-panel.monitor-target'),
-  monitorTargetHelp: t('config-panel.monitor-target.help'),
-  importFrom: t('config-panel.import-from'),
-  found: t('config-panel.found'),
-  noCommandsFound: t('config-panel.no-commands-found'),
-  selectAll: t('config-panel.select-all'),
-  clear: t('config-panel.clear'),
-  importSelected: t('config-panel.import-selected'),
-  noCommandsSelected: t('config-panel.no-commands-selected'),
-  imported: t('config-panel.imported'),
-  noCommandsConfigured: t('config-panel.no-commands-configured'),
-  removeCommand: t('config-panel.remove-command'),
-  saving: t('config-panel.saving'),
-  saved: t('config-panel.saved'),
-});
+const configPanelLabelKeys = [
+  'config-panel.title',
+  'config-panel.save',
+  'config-panel.commands',
+  'config-panel.display-name',
+  'config-panel.command',
+  'config-panel.monitor-target',
+  'config-panel.monitor-target.help',
+  'config-panel.import-from',
+  'config-panel.found',
+  'config-panel.no-commands-found',
+  'config-panel.select-all',
+  'config-panel.clear',
+  'config-panel.import-selected',
+  'config-panel.no-commands-selected',
+  'config-panel.imported',
+  'config-panel.no-commands-configured',
+  'config-panel.remove-command',
+  'config-panel.saving',
+  'config-panel.saved',
+] as const;
 
-const replaceTemplateLabels = (html: string, labels: Record<string, string>) =>
-  Object.entries(labels).reduce((current, [key, value]) => current.replaceAll(`{{${key}}}`, escapeHtml(value)), html);
+const getConfigPanelLabels = () =>
+  Object.fromEntries(configPanelLabelKeys.map((key) => [key, t(key)])) as Record<(typeof configPanelLabelKeys)[number], string>;
+
+const replaceTemplateLabels = (html: string) =>
+  html.replace(/"__([a-z-.]+)__"/g, (_, key: Parameters<typeof t>[0]) => escapeHtml(t(key)));
 
 const getNonce = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -274,7 +277,7 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
   const labels = getConfigPanelLabels();
   const panel = vscode.window.createWebviewPanel(
     'simpleLauncherImportCommands',
-    labels.panelTitle,
+    labels['config-panel.title'],
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -284,7 +287,7 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
 
   const nonce = getNonce();
   const state = await getImportPanelState();
-  panel.webview.html = replaceTemplateLabels(configPanelTemplate, labels)
+  panel.webview.html = replaceTemplateLabels(configPanelTemplate)
     .replaceAll('{{nonce}}', nonce)
     .replaceAll('{{cspSource}}', panel.webview.cspSource)
     .replace('{{labels}}', serializeStateForScript(labels))
