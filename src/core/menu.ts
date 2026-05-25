@@ -12,8 +12,8 @@ marker.show();
 export const openMenu = async (context: vscode.ExtensionContext) => {
   const simpleLaunchCommands = await load();
   if (simpleLaunchCommands.length === 0) {
-    const shouldImport = await vscode.window.showQuickPick([{ label: '是' }, { label: '否，我要手动编辑' }], {
-      title: '工作区还没有配置命令集，是否导入？（支持package.json和Cargo.toml）',
+    const shouldImport = await vscode.window.showQuickPick([{ label: '直接打开配置面板' }, { label: '暂时算了' }], {
+      title: '工作区还没有配置命令集，是否直接配置或者导入命令？（支持package.json和Cargo.toml）',
     });
     if (shouldImport?.label === '是') {
       await vscode.commands.executeCommand('simple-launcher.import-commands');
