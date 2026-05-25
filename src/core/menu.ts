@@ -2,15 +2,15 @@ import type { FullCommandName } from '@/types/global.js';
 import vscode from 'vscode';
 import { load } from '@/lib/config.js';
 
-const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+export const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
 const MENU_CMD = 'simple-launcher.menu' satisfies FullCommandName;
 
-item.text = '$(debug-start) ';
-item.command = MENU_CMD;
-item.show();
+statusBarItem.text = '$(debug-start) ';
+statusBarItem.command = MENU_CMD;
+statusBarItem.show();
 
-vscode.commands.registerCommand(MENU_CMD, async () => {
+export const vscodeCommand = vscode.commands.registerCommand(MENU_CMD, async () => {
   const simpleLaunchCommands = await load();
   const result = await vscode.window.showQuickPick(
     //   [
