@@ -9,8 +9,18 @@ marker.text = '$(debug-start) ' + t('status-bar.text');
 marker.command = 'simple-launcher.menu' satisfies FullCommandName;
 marker.show();
 
-export const openMenu = async () => {
+export const openMenu = async (context: vscode.ExtensionContext) => {
   const simpleLaunchCommands = await load();
+  if (simpleLaunchCommands.length === 0) {
+    const shouldImport = await vscode.window.showQuickPick([{ label: '是' }, { label: '否，我要手动编辑' }], {
+      title: '工作区还没有配置命令集，是否导入？（支持package.json和Cargo.toml）',
+    });
+    if (shouldImport?.label === '是') {
+      await vscode.commands.executeCommand('simple-launcher.import-commands');
+    }
+    return;
+  }
+
   const result = await vscode.window.showQuickPick(
     simpleLaunchCommands.map((item, i) => {
       if (item.displayName) {

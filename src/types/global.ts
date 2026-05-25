@@ -29,5 +29,7 @@ declare module 'vscode' {
       callback: (...args: any[]) => any,
       thisArg?: any,
     ): Disposable;
+
+    export function executeCommand<T = unknown>(command: FullCommandName, ...rest: any[]): Thenable<T>;
   }
 }
