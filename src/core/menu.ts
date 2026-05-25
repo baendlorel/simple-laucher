@@ -27,14 +27,14 @@ export const openMenu = async (context: vscode.ExtensionContext) => {
         return {
           index: i,
           label: item.displayName,
-          description: item.command,
-          detail: `Monitor target ${item.monitorTarget ?? 'N/A'}`,
+          detail: item.command,
+          description: `Monitoring: ${item.monitorTarget ?? 'N/A'}`,
         };
       }
       return {
         index: i,
         label: item.command,
-        detail: `Monitor target ${item.monitorTarget ?? 'N/A'}`,
+        description: `Monitoring: ${item.monitorTarget ?? 'N/A'}`,
       };
     }),
     {
