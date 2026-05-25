@@ -53,11 +53,22 @@
         "command": "simple-launcher.import-commands",
         "title": "%command.import-commands.title%",
         "category": "Simple Launcher"
+      },
+      {
+        "command": "simple-launcher.config-panel",
+        "title": "%command.config-panel.title%",
+        "category": "Simple Launcher"
       }
     ],
     "configuration": {
       "title": "%configuration.title%",
       "properties": {
+        "simple-launcher.monitor-interval": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "description": "%configuration.monitor-interval.description%"
+        },
         "simple-launcher.custom-commands": {
           "type": "array",
           "default": [],

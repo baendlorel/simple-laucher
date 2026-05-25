@@ -2,6 +2,7 @@ import type { FullCommandName } from '@/types/global.js';
 import vscode from 'vscode';
 import { load } from '@/lib/config.js';
 import { t } from '@/lib/l10n.js';
+import { runCommandInTerminal } from './terminal.js';
 
 export const marker = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
@@ -65,5 +66,5 @@ export const openMenu = async () => {
   }
 
   const cmd = simpleLaunchCommands[result.index];
-  vscode.window.showInformationMessage(t('menu.selected', cmd.command));
+  runCommandInTerminal(cmd);
 };

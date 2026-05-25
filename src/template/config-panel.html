@@ -58,6 +58,18 @@
       font-weight: 600;
     }
 
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 14px 0 8px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+    }
+
     .save {
       border: 0;
       border-radius: 4px;
@@ -241,6 +253,11 @@
         flex-direction: column;
       }
 
+      .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
       .candidate,
       .command-row,
       .header-row {
@@ -280,7 +297,10 @@
     <section id="imports"></section>
 
     <section>
-      <h2>"__config-panel.commands__"</h2>
+      <div class="section-heading">
+        <h2>"__config-panel.commands__"</h2>
+        <button id="add-command" class="secondary" type="button">"__config-panel.add-command__"</button>
+      </div>
       <div class="status">"__config-panel.monitor-target.help__"</div>
       <div class="header-row" aria-hidden="true">
         <div>"__config-panel.display-name__"</div>
@@ -297,6 +317,7 @@
     const state = '__initialState__';
     const importsEl = document.getElementById('imports');
     const commandsEl = document.getElementById('commands');
+    const addCommandEl = document.getElementById('add-command');
     const saveEl = document.getElementById('save');
     const statusEl = document.getElementById('status');
 
@@ -316,11 +337,12 @@
 
     const renderImports = () => {
       importsEl.innerHTML = '';
-      importsEl.hidden = !Array.isArray(state.sources) || state.sources.length === 0;
+      importsEl.hidden = !state.showImports || !Array.isArray(state.sources) || state.sources.length === 0;
 
       for (const group of state.sources) {
         const details = document.createElement('details');
         details.dataset.source = group.source;
+        details.open = true;
 
         const summary = document.createElement('summary');
         const title = document.createElement('span');
@@ -439,16 +461,21 @@
       };
     };
 
-    const renderCommands = () => {
-      commandsEl.innerHTML = '';
+    const isEmptyCommand = (command) =>
+      !command.displayName?.trim() && !command.command?.trim() && !command.monitorTarget?.trim();
 
-      if (commands.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = '__config-panel.no-commands-configured__';
-        commandsEl.append(empty);
+    const addCommand = () => {
+      const lastCommand = commands[commands.length - 1];
+      if (lastCommand && isEmptyCommand(lastCommand)) {
         return;
       }
+
+      commands = [...commands, { command: '' }];
+      renderCommands();
+    };
+
+    const renderCommands = () => {
+      commandsEl.innerHTML = '';
 
       commands.forEach((command, index) => {
         const row = document.createElement('div');
@@ -492,6 +519,7 @@
       setStatus('__config-panel.saving__');
     };
 
+    addCommandEl.addEventListener('click', addCommand);
     saveEl.addEventListener('click', save);
 
     window.addEventListener('keydown', (event) => {

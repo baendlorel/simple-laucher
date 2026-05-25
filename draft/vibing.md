@@ -41,6 +41,7 @@
 3、replace 正则 + $1 ，替换
 
 ==
+我精简了template的replace方式，你不用改回去。就在我的基础上进行：
 1、初次进入导入界面，collapse面板默认展开；
  panel要有新增按钮，用于新增一行。如果当前的最后一行输入框全是空的，就不新增；
  允许删除一行
@@ -50,4 +51,4 @@
   - 对getMemoryUsage函数返回的数组进行filter，如果不止一个，就求和，并显示为`{displayName}: {memoryUsage}({n} matched)`，其中n为filter后数组的长度；
   - 增加一个配置项，叫做monitor-interval，表示监控的时间间隔，单位为秒，默认值为3秒；
 4、运行命令的方法是拉起一个终端并在其中执行命令，以方便用户Ctrl+C终止。并且重新运行命令的时候尽量复用它。
-  - 在这个终端被终止的时候，statusbarItem上应该显示为`{displayName}: terminated`。
+  - 在这个终端被终止的时候，statusbarItem上应该显示为`{displayName}: terminated`。终端相关内容写在core/terminal.ts里，整体可以到处一个函数，在register.ts里注册它

@@ -230,9 +230,16 @@ const getImportPanelState = async () => {
 
   return {
     commands: load(),
+    showImports: true,
     sources,
   };
 };
+
+const getConfigPanelState = () => ({
+  commands: load(),
+  showImports: false,
+  sources: [],
+});
 
 const serializeCommands = (commands: CommandConfig[]) =>
   commands.map((command) => ({
@@ -243,9 +250,13 @@ const serializeCommands = (commands: CommandConfig[]) =>
     from: command.from,
   }));
 
-export const openImportCommandsPanel = async (context: vscode.ExtensionContext) => {
+const openConfigPanel = async (
+  context: vscode.ExtensionContext,
+  viewType: string,
+  state: Awaited<ReturnType<typeof getImportPanelState>> | ReturnType<typeof getConfigPanelState>,
+) => {
   const panel = vscode.window.createWebviewPanel(
-    'simpleLauncherImportCommands',
+    viewType,
     t('config-panel.title'),
     vscode.ViewColumn.One,
     {
@@ -255,7 +266,6 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
   );
 
   const nonce = getNonce();
-  const state = await getImportPanelState();
   panel.webview.html = configPanelTemplate
     .replace(/['"]__([a-z-.]+)__['"]/g, (_, key) => escapeHtml(t(key)))
     .replaceAll('__nonce__', nonce)
@@ -276,6 +286,14 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
     undefined,
     context.subscriptions,
   );
+};
+
+export const openImportCommandsPanel = async (context: vscode.ExtensionContext) => {
+  await openConfigPanel(context, 'simpleLauncherImportCommands', await getImportPanelState());
+};
+
+export const openConfigCommandsPanel = async (context: vscode.ExtensionContext) => {
+  await openConfigPanel(context, 'simpleLauncherConfigPanel', getConfigPanelState());
 };
 
 export const load = () => config().get<CommandConfig[]>('custom-commands', []);
