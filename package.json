@@ -46,11 +46,13 @@
     "commands": [
       {
         "command": "simple-launcher.menu",
-        "title": "%command.menu.title%"
+        "title": "%command.menu.title%",
+        "category": "Simple Launcher"
       },
       {
         "command": "simple-launcher.import-commands",
-        "title": "%command.import-commands.title%"
+        "title": "%command.import-commands.title%",
+        "category": "Simple Launcher"
       }
     ],
     "configuration": {

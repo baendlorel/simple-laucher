@@ -42,6 +42,8 @@
 
 ==
 1、初次进入导入界面，collapse面板默认展开；
+ panel要有新增按钮，用于新增一行。如果当前的最后一行输入框全是空的，就不新增；
+ 允许删除一行
 2、增加命令：config-panel为直接打开配置面板，同样是打开config-panel的webview但不进行扫描和导入，只做配置；
 3、如果存在monitorTarget，则使用mem-use-ts包，每隔X秒钟获取一次监控目标的内存情况。规则如下：
   - 要在statusbarItem也就是marker上显示内存使用情况，格式为`{displayName}: {memoryUsage}`
