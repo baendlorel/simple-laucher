@@ -53,7 +53,7 @@
         "simple-launcher.load-from": {
           "type": "array",
           "default": true,
-          "description": "%configuration.load-package-json.description%",
+          "description": "%configuration.load-from.description%",
           "items": {
             "type": "string",
             "enum": [

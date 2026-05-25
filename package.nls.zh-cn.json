@@ -1,17 +1,10 @@
 {
-  "extension.category": "JetBrains Titlebar",
-  "configuration.title": "JetBrains标题栏",
-  "command.applyGlow.title": "应用标题栏光晕效果",
-  "command.removeGlow.title": "移除标题栏光晕效果",
-  "command.manuallyRelocateCssPath.title": "手动指定 workbench.desktop.main.css 路径",
-  "command.autoRelocateCssPath.title": "自动定位 workbench.desktop.main.css 路径",
-  "statusbar.marker.name": "JetBrains 标题栏标记",
-  "statusbar.project-initials.name": "JetBrains 标题栏项目缩写",
-  "configuration.debug.description": "开启Debug模式，以获得详细日志",
-  "configuration.glowIntensity.description": "光晕效果强度百分比，默认 32",
-  "configuration.cssPath.description": "缓存的 workbench.desktop.main.css 路径，是一个machineId到css文件的映射对象",
-  "configuration.glowDiameter.description": "辉光直径（像素），推荐大于80，默认 260",
-  "configuration.glowOffsetX.description": "辉光水平偏移（像素），默认 120",
-  "configuration.colorSeed.description": "混入文件夹名称的随机种子，用于生成更丰富的颜色变化",
-  "configuration.showProjectInitials.description": "在标题栏显示项目首字母"
+  "configuration.title": "Simple Launcher",
+  "configuration.load-from.description": "从受支持的项目文件中加载命令。",
+  "configuration.load-from.package-json.description": "从 package.json 的 scripts 字段读取命令。scripts 的键会作为 displayName，值会作为 command。",
+  "configuration.load-from.cargo-toml.description": "从 Cargo.toml 的 [workspace] 读取成员路径，定位到各子包下的 Cargo.toml，再读取其中的 [package].name。此时 displayName 为 [package].name，command 为 cargo run --bin [package].name。",
+  "configuration.custom-commands.description": "手动定义的附加命令。",
+  "configuration.custom-commands.command.description": "要执行的命令。",
+  "configuration.custom-commands.displayName.description": "在界面中显示的名称。未提供时将直接使用 command。",
+  "configuration.custom-commands.monitorTarget.description": "要监控的进程名或正则表达式字符串。未提供时将禁用监控。"
 }

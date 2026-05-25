@@ -1,17 +1,10 @@
 {
-  "extension.category": "JetBrains Titlebar",
-  "configuration.title": "JetBrains Titlebar",
-  "command.applyGlow.title": "Apply Titlebar Glow Effect",
-  "command.removeGlow.title": "Remove Titlebar Glow Effect",
-  "command.manuallyRelocateCssPath.title": "Manually Specify workbench.desktop.main.css Path",
-  "command.autoRelocateCssPath.title": "Auto Detect workbench.desktop.main.css Path",
-  "statusbar.marker.name": "JetBrains Titlebar Marker",
-  "statusbar.project-initials.name": "JetBrains Titlebar Project Initials",
-  "configuration.debug.description": "Enable debug mode for verbose logging",
-  "configuration.glowIntensity.description": "Glow effect glowIntensity as percentage (0-100), default 32",
-  "configuration.cssPath.description": "Cached workbench workbench.desktop.main.css path, a machineId-cssPath map object",
-  "configuration.glowDiameter.description": "Glow diameter in pixels, > 80 recommended, default 260",
-  "configuration.glowOffsetX.description": "Glow horizontal offset in pixels, default 120",
-  "configuration.colorSeed.description": "Random seed mixed into folder name for color generation, allowing richer color variations",
-  "configuration.showProjectInitials.description": "Show project initials in the title bar"
+  "configuration.title": "Simple Launcher",
+  "configuration.load-from.description": "Load commands from supported project files.",
+  "configuration.load-from.package-json.description": "Read commands from the scripts field in package.json. The script key is used as displayName, and the script value is used as command.",
+  "configuration.load-from.cargo-toml.description": "Read members from [workspace] in Cargo.toml, resolve each member's Cargo.toml, and read [package].name. The [package].name value is used as displayName, and the command becomes cargo run --bin [package].name.",
+  "configuration.custom-commands.description": "Additional commands defined manually.",
+  "configuration.custom-commands.command.description": "The command to execute.",
+  "configuration.custom-commands.displayName.description": "The display name shown in the UI. If omitted, the command itself is used.",
+  "configuration.custom-commands.monitorTarget.description": "The process name or regex pattern string to monitor. If omitted, monitoring is disabled."
 }
