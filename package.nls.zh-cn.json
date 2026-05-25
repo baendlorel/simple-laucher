@@ -1,6 +1,7 @@
 {
   "configuration.title": "简易运行器",
   "command.menu.title": "命令面板",
+  "command.menu.import-commands": "从受支持的配置文件（如 package.json 和 Cargo.toml）导入命令",
   "extension.category": "简易运行器",
   "configuration.load-from.description": "从受支持的项目文件中加载命令。",
   "configuration.load-from.package-json.description": "从 package.json 的 scripts 字段读取命令。scripts 的键会作为 displayName，值会作为 command。",

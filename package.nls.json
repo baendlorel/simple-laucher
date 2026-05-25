@@ -1,6 +1,7 @@
 {
   "configuration.title": "Simple Launcher",
   "command.menu.title": "Command Menu",
+  "command.menu.import-commands": "Import Commands from supported config files like package.json and Cargo.toml",
   "extension.category": "Simple Launcher",
   "configuration.load-from.description": "Load commands from supported project files.",
   "configuration.load-from.package-json.description": "Read commands from the scripts field in package.json. The script key is used as displayName, and the script value is used as command.",
