@@ -33,3 +33,13 @@
 2、删除simple-launcher.load-from配置和相关函数、机制，因为已经有了导入面板，不需要它了；
 3、导入面板的ui，整体来说太宽松了，padding太大，需要更紧凑一点，这样显示更方便；
 4、对于不存在的文件，比如如果没有cargo.toml或者package.json，建议在面板上就不显示了。如果两个都没，则只显示下方的编辑面板
+
+==
+1、初次进入导入界面，collapse面板默认展开；
+2、增加命令：config-panel为直接打开配置面板，同样是打开config-panel的webview但不进行扫描和导入，只做配置；
+3、如果存在monitorTarget，则使用mem-use-ts包，每隔X秒钟获取一次监控目标的内存情况。规则如下：
+  - 要在statusbarItem也就是marker上显示内存使用情况，格式为`{displayName}: {memoryUsage}`
+  - 对getMemoryUsage函数返回的数组进行filter，如果不止一个，就求和，并显示为`{displayName}: {memoryUsage}({n} matched)`，其中n为filter后数组的长度；
+  - 增加一个配置项，叫做monitor-interval，表示监控的时间间隔，单位为秒，默认值为3秒；
+4、运行命令的方法是拉起一个终端并在其中执行命令，以方便用户Ctrl+C终止。并且重新运行命令的时候尽量复用它。
+  - 在这个终端被终止的时候，statusbarItem上应该显示为`{displayName}: terminated`。

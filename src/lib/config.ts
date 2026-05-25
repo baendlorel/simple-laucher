@@ -2,6 +2,7 @@ import type { CommandConfig } from '@/types/index.js';
 import vscode from 'vscode';
 import { parse } from 'smol-toml';
 import configPanelTemplate from '@/template/config-panel.html?raw';
+import { t } from './l10n.js';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
 const textDecoder = new TextDecoder();
@@ -32,6 +33,39 @@ const normalizePath = (value: string) => value.replaceAll('\\', '/');
 
 const serializeStateForScript = (value: unknown) =>
   JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
+
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+const getConfigPanelLabels = () => ({
+  panelTitle: t('config-panel.title'),
+  save: t('config-panel.save'),
+  commands: t('config-panel.commands'),
+  displayName: t('config-panel.display-name'),
+  command: t('config-panel.command'),
+  monitorTarget: t('config-panel.monitor-target'),
+  monitorTargetHelp: t('config-panel.monitor-target.help'),
+  importFrom: t('config-panel.import-from'),
+  found: t('config-panel.found'),
+  noCommandsFound: t('config-panel.no-commands-found'),
+  selectAll: t('config-panel.select-all'),
+  clear: t('config-panel.clear'),
+  importSelected: t('config-panel.import-selected'),
+  noCommandsSelected: t('config-panel.no-commands-selected'),
+  imported: t('config-panel.imported'),
+  noCommandsConfigured: t('config-panel.no-commands-configured'),
+  removeCommand: t('config-panel.remove-command'),
+  saving: t('config-panel.saving'),
+  saved: t('config-panel.saved'),
+});
+
+const replaceTemplateLabels = (html: string, labels: Record<string, string>) =>
+  Object.entries(labels).reduce((current, [key, value]) => current.replaceAll(`{{${key}}}`, escapeHtml(value)), html);
 
 const getNonce = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -237,9 +271,10 @@ const serializeCommands = (commands: CommandConfig[]) =>
   }));
 
 export const openImportCommandsPanel = async (context: vscode.ExtensionContext) => {
+  const labels = getConfigPanelLabels();
   const panel = vscode.window.createWebviewPanel(
     'simpleLauncherImportCommands',
-    'Simple Launcher Commands',
+    labels.panelTitle,
     vscode.ViewColumn.One,
     {
       enableScripts: true,
@@ -249,9 +284,10 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
 
   const nonce = getNonce();
   const state = await getImportPanelState();
-  panel.webview.html = configPanelTemplate
+  panel.webview.html = replaceTemplateLabels(configPanelTemplate, labels)
     .replaceAll('{{nonce}}', nonce)
     .replaceAll('{{cspSource}}', panel.webview.cspSource)
+    .replace('{{labels}}', serializeStateForScript(labels))
     .replace('{{initialState}}', serializeStateForScript(state));
 
   panel.webview.onDidReceiveMessage(
@@ -263,7 +299,7 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
       const commands = serializeCommands(message.commands).filter((command) => command.command);
       await save(commands);
       await panel.webview.postMessage({ type: 'saved', commands });
-      vscode.window.showInformationMessage('Simple Launcher commands saved.');
+      vscode.window.showInformationMessage(t('config-panel.saved-message'));
     },
     undefined,
     context.subscriptions,

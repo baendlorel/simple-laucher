@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src 'nonce-{{nonce}}';" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simple Launcher Commands</title>
+  <title>{{panelTitle}}</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -271,16 +271,17 @@
   <main class="page">
     <div class="toolbar">
       <div>
-        <h1>Simple Launcher Commands</h1>
+        <h1>{{panelTitle}}</h1>
         <div id="status" class="status"></div>
       </div>
-      <button id="save" class="save" type="button">Save (Ctrl+S)</button>
+      <button id="save" class="save" type="button">{{save}}</button>
     </div>
 
     <section id="imports"></section>
 
     <section>
-      <h2>Commands</h2>
+      <h2>{{commands}}</h2>
+      <div class="status">{{monitorTargetHelp}}</div>
       <div class="header-row" aria-hidden="true">
         <div>{{displayName}}</div>
         <div>{{command}}</div>
@@ -293,7 +294,8 @@
 
   <script nonce="{{nonce}}">
     const vscode = acquireVsCodeApi();
-    const state = {{ initialState }};
+    const state = {{initialState}};
+    const labels = {{labels}};
     const importsEl = document.getElementById('imports');
     const commandsEl = document.getElementById('commands');
     const saveEl = document.getElementById('save');
@@ -305,7 +307,10 @@
       statusEl.textContent = text;
     };
 
-    const sourceTitle = (source) => `Import from ${source}`;
+    const format = (template, ...args) =>
+      args.reduce((text, arg, index) => text.replace(`{${index}}`, String(arg)), template);
+
+    const sourceTitle = (source) => format(labels.importFrom, source);
 
     const getSourceSelectedIds = (source) =>
       [...document.querySelectorAll(`input[data-source="${source}"]:checked`)].map((input) => input.value);
@@ -323,7 +328,7 @@
         const meta = document.createElement('span');
         title.textContent = sourceTitle(group.source);
         meta.className = 'summary-meta';
-        meta.textContent = `${group.commands.length} found`;
+        meta.textContent = format(labels.found, group.commands.length);
         summary.append(title, meta);
 
         const body = document.createElement('div');
@@ -339,7 +344,7 @@
         if (group.commands.length === 0) {
           const empty = document.createElement('div');
           empty.className = 'empty';
-          empty.textContent = `No commands found in ${group.source}.`;
+          empty.textContent = format(labels.noCommandsFound, group.source);
           body.append(empty);
         } else {
           const actions = document.createElement('div');
@@ -348,7 +353,7 @@
           const selectAll = document.createElement('button');
           selectAll.type = 'button';
           selectAll.className = 'secondary';
-          selectAll.textContent = 'Select all';
+          selectAll.textContent = labels.selectAll;
           selectAll.addEventListener('click', () => {
             document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
               input.checked = true;
@@ -358,7 +363,7 @@
           const clear = document.createElement('button');
           clear.type = 'button';
           clear.className = 'secondary';
-          clear.textContent = 'Clear';
+          clear.textContent = labels.clear;
           clear.addEventListener('click', () => {
             document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
               input.checked = false;
@@ -368,7 +373,7 @@
           const confirm = document.createElement('button');
           confirm.type = 'button';
           confirm.className = 'primary';
-          confirm.textContent = 'Import selected';
+          confirm.textContent = labels.importSelected;
           confirm.addEventListener('click', () => {
             const selected = new Set(getSourceSelectedIds(group.source));
             const imports = group.commands
@@ -376,14 +381,14 @@
               .map(({ id, sourceFile, ...command }) => command);
 
             if (imports.length === 0) {
-              setStatus('No commands selected.');
+              setStatus(labels.noCommandsSelected);
               return;
             }
 
             commands = [...commands, ...imports];
             details.open = false;
             renderCommands();
-            setStatus(`${imports.length} command${imports.length === 1 ? '' : 's'} imported.`);
+            setStatus(format(labels.imported, imports.length));
           });
 
           actions.append(selectAll, clear, confirm);
@@ -441,7 +446,7 @@
       if (commands.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'empty';
-        empty.textContent = 'No commands configured.';
+        empty.textContent = labels.noCommandsConfigured;
         commandsEl.append(empty);
         return;
       }
@@ -451,24 +456,24 @@
         row.className = 'command-row';
 
         const displayName = document.createElement('input');
-        displayName.placeholder = 'displayName';
+        displayName.placeholder = labels.displayName;
         displayName.value = command.displayName || '';
         displayName.addEventListener('input', () => updateCommand(index, 'displayName', displayName.value));
 
         const commandInput = document.createElement('input');
-        commandInput.placeholder = 'command';
+        commandInput.placeholder = labels.command;
         commandInput.value = command.command || '';
         commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
 
         const monitorTarget = document.createElement('input');
-        monitorTarget.placeholder = 'monitorTarget';
+        monitorTarget.placeholder = labels.monitorTarget;
         monitorTarget.value = command.monitorTarget || '';
         monitorTarget.addEventListener('input', () => updateCommand(index, 'monitorTarget', monitorTarget.value));
 
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'danger remove';
-        remove.title = 'Remove command';
+        remove.title = labels.removeCommand;
         remove.textContent = '×';
         remove.addEventListener('click', () => {
           commands = commands.filter((_, commandIndex) => commandIndex !== index);
@@ -485,7 +490,7 @@
         type: 'save',
         commands,
       });
-      setStatus('Saving...');
+      setStatus(labels.saving);
     };
 
     saveEl.addEventListener('click', save);
@@ -504,7 +509,7 @@
 
       commands = event.data.commands;
       renderCommands();
-      setStatus('Saved.');
+      setStatus(labels.saved);
     });
 
     renderImports();

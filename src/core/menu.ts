@@ -9,14 +9,32 @@ marker.text = '$(debug-start) ' + t('status-bar.text');
 marker.command = 'simple-launcher.menu' satisfies FullCommandName;
 marker.show();
 
-export const openMenu = async (context: vscode.ExtensionContext) => {
+export const openMenu = async () => {
   const simpleLaunchCommands = await load();
+  const getMonitorDescription = (monitorTarget: string | undefined) =>
+    t('menu.monitoring', monitorTarget ?? t('menu.not-available'));
+
   if (simpleLaunchCommands.length === 0) {
-    const shouldImport = await vscode.window.showQuickPick([{ label: '直接打开配置面板' }, { label: '暂时算了' }], {
-      title: '工作区还没有配置命令集，是否直接配置或者导入命令？（支持package.json和Cargo.toml）',
-    });
-    if (shouldImport?.label === '是') {
-      await vscode.commands.executeCommand('simple-launcher.import-commands');
+    const action = await vscode.window.showQuickPick(
+      [
+        {
+          action: 'import' as const,
+          label: t('menu.empty.import'),
+          description: t('menu.empty.import.description'),
+        },
+        {
+          action: 'cancel' as const,
+          label: t('menu.empty.cancel'),
+        },
+      ],
+      {
+        title: t('menu.empty.title'),
+        placeHolder: t('menu.empty.placeholder'),
+        ignoreFocusOut: true,
+      },
+    );
+    if (action?.action === 'import') {
+      await vscode.commands.executeCommand('simple-launcher.import-commands' satisfies FullCommandName);
     }
     return;
   }
@@ -28,13 +46,13 @@ export const openMenu = async (context: vscode.ExtensionContext) => {
           index: i,
           label: item.displayName,
           detail: item.command,
-          description: `Monitoring: ${item.monitorTarget ?? 'N/A'}`,
+          description: getMonitorDescription(item.monitorTarget),
         };
       }
       return {
         index: i,
         label: item.command,
-        description: `Monitoring: ${item.monitorTarget ?? 'N/A'}`,
+        description: getMonitorDescription(item.monitorTarget),
       };
     }),
     {
@@ -47,5 +65,5 @@ export const openMenu = async (context: vscode.ExtensionContext) => {
   }
 
   const cmd = simpleLaunchCommands[result.index];
-  vscode.window.showInformationMessage(`You selected: ${cmd.command}`);
+  vscode.window.showInformationMessage(t('menu.selected', cmd.command));
 };
