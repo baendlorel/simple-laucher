@@ -1,11 +1,11 @@
-import type { CommandConfig, LoadFrom } from '@/types/index.js';
+import type { CommandConfig } from '@/types/index.js';
 import vscode from 'vscode';
 import { parse } from 'smol-toml';
 import configPanelTemplate from '@/template/config-panel.html?raw';
-import path from 'node:path';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
 const textDecoder = new TextDecoder();
+type ImportSource = NonNullable<CommandConfig['from']>;
 
 interface ImportCommandCandidate extends CommandConfig {
   id: string;
@@ -13,7 +13,7 @@ interface ImportCommandCandidate extends CommandConfig {
 }
 
 interface ImportSourceGroup {
-  source: LoadFrom;
+  source: ImportSource;
   commands: ImportCommandCandidate[];
   error: string | null;
 }
@@ -50,8 +50,13 @@ const getRelativePath = (root: vscode.WorkspaceFolder, uri: vscode.Uri) => {
   return relativePath.startsWith(`${root.name}/`) ? relativePath.slice(root.name.length + 1) : relativePath;
 };
 
-const createCandidateId = (source: LoadFrom, sourceFile: string, displayName: string, command: string) =>
+const createCandidateId = (source: ImportSource, sourceFile: string, displayName: string, command: string) =>
   `${source}:${sourceFile}:${displayName}:${command}`;
+
+const getDirectoryFromRelativeFile = (relativeFile: string) => {
+  const index = relativeFile.lastIndexOf('/');
+  return index === -1 ? '.' : relativeFile.slice(0, index);
+};
 
 const ignoredPackageJsonDirs = new Set([
   '.git',
@@ -70,8 +75,6 @@ const isIgnoredPackageJson = (root: vscode.WorkspaceFolder, uri: vscode.Uri) =>
   getRelativePath(root, uri)
     .split('/')
     .some((segment) => ignoredPackageJsonDirs.has(segment));
-
-const getPackageDirectory = (uri: vscode.Uri) => normalizePath(path.dirname(uri.fsPath));
 
 const findPackageJsonFiles = async (root: vscode.WorkspaceFolder) => {
   const files = await vscode.workspace.findFiles(
@@ -109,8 +112,7 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
 
       const data = parsePackageJson(content);
       const sourceFile = getRelativePath(root, uri);
-      const packageDir = sourceFile.replace(/\/package\.json$/, '');
-      const cwd = getPackageDirectory(uri);
+      const packageDir = getDirectoryFromRelativeFile(sourceFile);
       const isRootPackage = sourceFile === 'package.json';
       const displayPrefix = data.name ?? packageDir;
 
@@ -119,7 +121,7 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
           id: createCandidateId('package.json', sourceFile, isRootPackage ? key : `${displayPrefix}:${key}`, value),
           displayName: isRootPackage ? key : `${displayPrefix}:${key}`,
           command: value,
-          cwd,
+          cwd: packageDir,
           from: 'package.json',
           sourceFile,
         }),
@@ -128,11 +130,6 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
   );
 
   return packageCommands.flat();
-};
-
-const loadFromPackageJson = async (root: vscode.WorkspaceFolder | null): Promise<CommandConfig[]> => {
-  const candidates = await getPackageJsonCandidates(root);
-  return candidates.map(({ id: _id, sourceFile: _sourceFile, ...command }) => command);
 };
 
 const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Promise<ImportCommandCandidate[]> => {
@@ -154,7 +151,7 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
           id: createCandidateId('Cargo.toml', 'Cargo.toml', data.package.name, 'cargo run'),
           displayName: data.package.name,
           command: 'cargo run',
-          cwd: normalizePath(root.uri.fsPath),
+          cwd: '.',
           from: 'Cargo.toml',
           sourceFile: 'Cargo.toml',
         } satisfies ImportCommandCandidate,
@@ -187,7 +184,7 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
         id: createCandidateId('Cargo.toml', sourceFile, data.package.name, command),
         displayName: data.package.name,
         command,
-        cwd: normalizePath(path.dirname(cargoTomlPath.fsPath)),
+        cwd: getDirectoryFromRelativeFile(sourceFile),
         from: 'Cargo.toml',
         sourceFile,
       };
@@ -197,13 +194,8 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
   return [...rootCommand, ...memberCommands];
 };
 
-const loadFromCargoToml = async (root: vscode.WorkspaceFolder | null): Promise<CommandConfig[]> => {
-  const candidates = await getCargoTomlCandidates(root);
-  return candidates.map(({ id: _id, sourceFile: _sourceFile, ...command }) => command);
-};
-
 const getImportSource = async (
-  source: LoadFrom,
+  source: ImportSource,
   loader: (root: vscode.WorkspaceFolder | null) => Promise<ImportCommandCandidate[]>,
 ): Promise<ImportSourceGroup> => {
   try {
@@ -223,13 +215,17 @@ const getImportSource = async (
 
 const getCurrentCustomCommands = () => config().get<CommandConfig[]>('custom-commands', []);
 
-const getImportPanelState = async () => ({
-  commands: getCurrentCustomCommands(),
-  sources: [
+const getImportPanelState = async () => {
+  const sources = [
     await getImportSource('package.json', getPackageJsonCandidates),
     await getImportSource('Cargo.toml', getCargoTomlCandidates),
-  ],
-});
+  ].filter((group) => group.commands.length > 0 || group.error);
+
+  return {
+    commands: getCurrentCustomCommands(),
+    sources,
+  };
+};
 
 const serializeCommands = (commands: CommandConfig[]) =>
   commands.map((command) => ({
@@ -275,21 +271,7 @@ export const openImportCommandsPanel = async (context: vscode.ExtensionContext) 
 };
 
 export const load = async () => {
-  const loadFrom = config().get<LoadFrom[]>('load-from', []);
-  vscode.window.showInformationMessage(`Loading commands from: ${typeof loadFrom} ${Array.isArray(loadFrom)}`);
-
-  const commands = config().get<CommandConfig[]>('custom-commands', []);
-  if (loadFrom.includes('package.json')) {
-    const arr = await loadFromPackageJson(vscode.workspace.workspaceFolders?.[0] ?? null);
-    commands.push(...arr);
-  }
-
-  if (loadFrom.includes('Cargo.toml')) {
-    const arr = await loadFromCargoToml(vscode.workspace.workspaceFolders?.[0] ?? null);
-    commands.push(...arr);
-  }
-
-  return commands;
+  return getCurrentCustomCommands();
 };
 
 export const save = (commands: CommandConfig[], configurationTarget = vscode.ConfigurationTarget.Workspace) => {

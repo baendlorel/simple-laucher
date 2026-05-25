@@ -26,5 +26,3 @@ export interface CommandConfig {
 
   from?: 'package.json' | 'Cargo.toml';
 }
-
-export type LoadFrom = 'package.json' | 'Cargo.toml';

@@ -56,23 +56,6 @@
     "configuration": {
       "title": "%configuration.title%",
       "properties": {
-        "simple-launcher.load-from": {
-          "type": "array",
-          "default": [],
-          "description": "%configuration.load-from.description%",
-          "items": {
-            "type": "string",
-            "enum": [
-              "package.json",
-              "Cargo.toml"
-            ],
-            "enumDescriptions": [
-              "%configuration.load-from.package-json.description%",
-              "%configuration.load-from.cargo-toml.description%"
-            ],
-            "description": "Command source file type"
-          }
-        },
         "simple-launcher.custom-commands": {
           "type": "array",
           "default": [],

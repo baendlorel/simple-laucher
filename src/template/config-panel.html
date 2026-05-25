@@ -19,7 +19,7 @@
 
       body {
         margin: 0;
-        padding: 20px;
+        padding: 12px;
         color: var(--vscode-foreground);
         background: var(--vscode-editor-background);
         font-family: var(--vscode-font-family);
@@ -32,7 +32,7 @@
       }
 
       .page {
-        max-width: 1120px;
+        max-width: 1280px;
         margin: 0 auto;
       }
 
@@ -43,27 +43,27 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        padding: 0 0 16px;
+        gap: 8px;
+        padding: 0 0 8px;
         background: var(--vscode-editor-background);
       }
 
       h1 {
         margin: 0;
-        font-size: 20px;
+        font-size: 16px;
         font-weight: 600;
       }
 
       h2 {
-        margin: 24px 0 12px;
-        font-size: 15px;
+        margin: 14px 0 8px;
+        font-size: 13px;
         font-weight: 600;
       }
 
       .save {
         border: 0;
         border-radius: 4px;
-        padding: 8px 14px;
+        padding: 5px 10px;
         color: var(--vscode-button-foreground);
         background: var(--vscode-button-background);
         cursor: pointer;
@@ -74,13 +74,13 @@
       }
 
       .status {
-        min-height: 18px;
+        min-height: 15px;
         color: var(--vscode-descriptionForeground);
         font-size: 12px;
       }
 
       details {
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         border: 1px solid var(--vscode-panel-border);
         border-radius: 6px;
         background: var(--vscode-sideBar-background);
@@ -90,8 +90,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
+        gap: 8px;
+        padding: 7px 9px;
         cursor: pointer;
         font-weight: 600;
       }
@@ -104,22 +104,22 @@
 
       .import-body {
         border-top: 1px solid var(--vscode-panel-border);
-        padding: 12px 14px 14px;
+        padding: 8px 9px 9px;
       }
 
       .import-actions {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 6px;
+        margin-bottom: 8px;
       }
 
       .secondary,
       .danger {
         border: 1px solid var(--vscode-button-border, transparent);
         border-radius: 4px;
-        padding: 6px 10px;
+        padding: 4px 8px;
         color: var(--vscode-button-secondaryForeground);
         background: var(--vscode-button-secondaryBackground);
         cursor: pointer;
@@ -137,7 +137,7 @@
       .primary {
         border: 0;
         border-radius: 4px;
-        padding: 6px 12px;
+        padding: 4px 9px;
         color: var(--vscode-button-foreground);
         background: var(--vscode-button-background);
         cursor: pointer;
@@ -150,15 +150,15 @@
       .candidate-list,
       .command-list {
         display: grid;
-        gap: 8px;
+        gap: 5px;
       }
 
       .candidate {
         display: grid;
-        grid-template-columns: 24px minmax(160px, 0.8fr) minmax(160px, 0.8fr) minmax(220px, 1.4fr);
+        grid-template-columns: 20px minmax(140px, 0.8fr) minmax(140px, 0.8fr) minmax(220px, 1.5fr);
         align-items: center;
-        gap: 10px;
-        padding: 8px;
+        gap: 7px;
+        padding: 5px 6px;
         border: 1px solid var(--vscode-panel-border);
         border-radius: 4px;
         background: var(--vscode-editor-background);
@@ -185,21 +185,21 @@
       }
 
       .empty {
-        padding: 12px;
+        padding: 8px;
         border: 1px dashed var(--vscode-panel-border);
         border-radius: 4px;
         color: var(--vscode-descriptionForeground);
       }
 
       .error {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         color: var(--vscode-errorForeground);
       }
 
       .command-row {
         display: grid;
         grid-template-columns: minmax(140px, 0.9fr) minmax(240px, 1.4fr) minmax(140px, 0.9fr) 36px;
-        gap: 8px;
+        gap: 5px;
         align-items: center;
       }
 
@@ -208,7 +208,7 @@
         min-width: 0;
         border: 1px solid var(--vscode-input-border, transparent);
         border-radius: 4px;
-        padding: 7px 8px;
+        padding: 5px 7px;
         color: var(--vscode-input-foreground);
         background: var(--vscode-input-background);
       }
@@ -220,22 +220,22 @@
 
       .remove {
         width: 36px;
-        height: 32px;
+        height: 28px;
         padding: 0;
       }
 
       .header-row {
         display: grid;
         grid-template-columns: minmax(140px, 0.9fr) minmax(240px, 1.4fr) minmax(140px, 0.9fr) 36px;
-        gap: 8px;
-        margin-bottom: 6px;
+        gap: 5px;
+        margin-bottom: 4px;
         color: var(--vscode-descriptionForeground);
         font-size: 12px;
       }
 
       @media (max-width: 720px) {
         body {
-          padding: 14px;
+          padding: 10px;
         }
 
         .toolbar {
@@ -313,6 +313,7 @@
 
       const renderImports = () => {
         importsEl.innerHTML = '';
+        importsEl.hidden = !Array.isArray(state.sources) || state.sources.length === 0;
 
         for (const group of state.sources) {
           const details = document.createElement('details');
