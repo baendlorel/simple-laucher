@@ -1,5 +1,7 @@
 {
-  "configuration.title": "Simple Launcher",
+  "configuration.title": "简易运行器",
+  "command.menu.title": "命令面板",
+  "extension.category": "简易运行器",
   "configuration.load-from.description": "从受支持的项目文件中加载命令。",
   "configuration.load-from.package-json.description": "从 package.json 的 scripts 字段读取命令。scripts 的键会作为 displayName，值会作为 command。",
   "configuration.load-from.cargo-toml.description": "从 Cargo.toml 的 [workspace] 读取成员路径，定位到各子包下的 Cargo.toml，再读取其中的 [package].name。此时 displayName 为 [package].name，command 为 cargo run --bin [package].name。",

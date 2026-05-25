@@ -16,6 +16,7 @@ export type I18NKeys = keyof typeof pkgNls;
 export type _StripPrefixAndTitle<T> = T extends I18NKeys ? (T extends `command.${infer R}.title` ? R : never) : never;
 
 export type CommandName = _StripPrefixAndTitle<I18NKeys>;
+export type FullCommandName = `simple-launcher.${CommandName}`;
 
 declare global {
   const __IS_DEV__: boolean;

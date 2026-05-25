@@ -1,5 +1,7 @@
 {
   "configuration.title": "Simple Launcher",
+  "command.menu.title": "Command Menu",
+  "extension.category": "Simple Launcher",
   "configuration.load-from.description": "Load commands from supported project files.",
   "configuration.load-from.package-json.description": "Read commands from the scripts field in package.json. The script key is used as displayName, and the script value is used as command.",
   "configuration.load-from.cargo-toml.description": "Read members from [workspace] in Cargo.toml, resolve each member's Cargo.toml, and read [package].name. The [package].name value is used as displayName, and the command becomes cargo run --bin [package].name.",

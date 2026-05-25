@@ -46,7 +46,13 @@
     "ui"
   ],
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "simple-launcher.menu",
+        "title": "%command.menu.title%",
+        "category": "%extension.category%"
+      }
+    ],
     "configuration": {
       "title": "%configuration.title%",
       "properties": {

@@ -4,7 +4,7 @@ import { parse } from 'smol-toml';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
 
-const loadFromJson = async (root: vscode.WorkspaceFolder | undefined) => {
+const loadFromPackageJson = async (root: vscode.WorkspaceFolder | undefined) => {
   if (!root) {
     return [];
   }
@@ -64,12 +64,16 @@ export const load = async () => {
   const loadFrom = config().get<LoadFrom[]>('load-from', []);
   const commands = config().get<CommandConfig[]>('custom-commands', []);
   if (loadFrom.includes('package.json')) {
-    const arr = await loadFromJson(vscode.workspace.workspaceFolders?.[0]);
+    const arr = await loadFromPackageJson(vscode.workspace.workspaceFolders?.[0]);
     commands.push(...arr);
   }
 
   if (loadFrom.includes('Cargo.toml')) {
+    const arr = await loadFromCargoToml(vscode.workspace.workspaceFolders?.[0]);
+    commands.push(...arr);
   }
+
+  return commands;
 };
 
 export const save = (commands: CommandConfig[], configurationTarget = vscode.ConfigurationTarget.Workspace) => {
