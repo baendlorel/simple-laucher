@@ -1,4 +1,5 @@
 import type { FullCommandName } from '@/types/global.js';
+import type { CommandConfig } from '@/types/index.js';
 import vscode from 'vscode';
 import { load } from '@/lib/config.js';
 import { t } from '@/lib/l10n.js';
@@ -12,9 +13,13 @@ marker.show();
 
 export const openMenu = async () => {
   const simpleLaunchCommands = await load();
-  const getMonitorDescription = (monitorTarget: string | undefined) =>
-    t('menu.monitoring', monitorTarget ?? t('menu.not-available'));
-
+  const monitorText = (item: CommandConfig) => {
+    if (item.monitorTarget) {
+      return `($(eye-watch) ${item.monitorTarget}) `;
+    } else {
+      return '';
+    }
+  };
   if (simpleLaunchCommands.length === 0) {
     const action = await vscode.window.showQuickPick(
       [
@@ -40,29 +45,30 @@ export const openMenu = async () => {
     return;
   }
 
+  const items = simpleLaunchCommands.map((item, i) => {
+    if (item.displayName) {
+      return {
+        index: i,
+        action: 'exec',
+        label: '$(debug-start) ' + item.displayName,
+        description: monitorText(item) + item.command,
+      };
+    }
+    return {
+      index: i,
+      action: 'exec',
+      label: '$(debug-start) ' + item.command,
+      description: monitorText(item),
+    };
+  });
+
   const result = await vscode.window.showQuickPick(
     [
-      ...simpleLaunchCommands.map((item, i) => {
-        if (item.displayName) {
-          return {
-            index: i,
-            action: 'exec',
-            label: item.displayName,
-            detail: item.command,
-            description: getMonitorDescription(item.monitorTarget),
-          };
-        }
-        return {
-          index: i,
-          action: 'exec',
-          label: item.command,
-          description: getMonitorDescription(item.monitorTarget),
-        };
-      }),
+      ...items,
       {
         index: NaN,
         action: 'config' as const,
-        label: t('menu.config'),
+        label: '$(gear) ' + t('menu.config'),
         description: t('menu.config.description'),
       },
     ],
