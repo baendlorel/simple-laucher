@@ -1,12 +1,13 @@
 import vscode from 'vscode';
 import { marker, openMenu } from './core/menu.js';
-import { registerTerminal } from './core/terminal.js';
+import { registerTaskEnd, registerTaskProcessEnd } from './core/terminal.js';
 import { openPanel } from './lib/config.js';
 
 export const activate = async (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
     marker,
-    vscode.window.onDidCloseTerminal(registerTerminal),
+    vscode.tasks.onDidEndTask(registerTaskEnd),
+    vscode.tasks.onDidEndTaskProcess(registerTaskProcessEnd),
     vscode.commands.registerCommand('simple-launcher.menu', openMenu),
     vscode.commands.registerCommand('simple-launcher.import-commands', () =>
       openPanel(context, 'simple-launcher.import-commands'),
