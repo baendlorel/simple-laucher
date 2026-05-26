@@ -339,7 +339,19 @@
 
       const renderImports = () => {
         importsEl.innerHTML = '';
-        importsEl.hidden = !state.showImports || !Array.isArray(state.sources) || state.sources.length === 0;
+        importsEl.hidden = !state.showImports;
+
+        if (importsEl.hidden) {
+          return;
+        }
+
+        if (!Array.isArray(state.sources) || state.sources.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = '__config-panel.no-importable-commands__';
+          importsEl.append(empty);
+          return;
+        }
 
         for (const group of state.sources) {
           const details = document.createElement('details');

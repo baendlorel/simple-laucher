@@ -18,3 +18,11 @@ export const readFileText = async (uri: vscode.Uri): Promise<string | null> => {
     return null;
   }
 };
+
+export const createMatcher = (s: string) => {
+  try {
+    return new Function('a', `return (${s})(a)`) as (str: string) => boolean;
+  } catch {
+    return (text: string) => s === text;
+  }
+};
