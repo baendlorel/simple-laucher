@@ -146,7 +146,7 @@ export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullComma
 
   const nonce = Math.random().toString(36).slice(2);
   panel.webview.html = configPanelTemplate
-    .replace(/['"]__([a-z-.]+)__['"]/g, (_, key) =>
+    .replace(/"__(config-panel\.[a-z-.]+)__"/g, (_, key) =>
       t(key)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -154,6 +154,7 @@ export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullComma
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;'),
     )
+    .replace(/'__(config-panel\.[a-z-.]+)__'/g, (_, key) => JSON.stringify(t(key)))
     .replaceAll('__nonce__', nonce)
     .replaceAll(`__cspSource__`, panel.webview.cspSource);
 

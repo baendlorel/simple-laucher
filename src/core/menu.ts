@@ -41,27 +41,42 @@ export const openMenu = async () => {
   }
 
   const result = await vscode.window.showQuickPick(
-    simpleLaunchCommands.map((item, i) => {
-      if (item.displayName) {
+    [
+      ...simpleLaunchCommands.map((item, i) => {
+        if (item.displayName) {
+          return {
+            index: i,
+            action: 'exec',
+            label: item.displayName,
+            detail: item.command,
+            description: getMonitorDescription(item.monitorTarget),
+          };
+        }
         return {
           index: i,
-          label: item.displayName,
-          detail: item.command,
+          action: 'exec',
+          label: item.command,
           description: getMonitorDescription(item.monitorTarget),
         };
-      }
-      return {
-        index: i,
-        label: item.command,
-        description: getMonitorDescription(item.monitorTarget),
-      };
-    }),
+      }),
+      {
+        index: NaN,
+        action: 'config' as const,
+        label: t('menu.config'),
+        description: t('menu.config.description'),
+      },
+    ],
     {
       title: t('menu.title'),
     },
   );
 
   if (!result) {
+    return;
+  }
+
+  if (result.action === 'config') {
+    await vscode.commands.executeCommand('simple-launcher.config-panel' satisfies FullCommandName);
     return;
   }
 
