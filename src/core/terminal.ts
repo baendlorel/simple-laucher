@@ -77,8 +77,6 @@ const isMatch = (processName: string, monitorTarget: string) => {
   }
 };
 
-const getMemoryUse = (item: MemoryUsage) => formatBytes(item.privateMemory ?? item.memory);
-
 const updateMemoryStatus = async (command: CommandConfig) => {
   const monitorTarget = command.monitorTarget;
   if (!monitorTarget) {
@@ -99,11 +97,11 @@ const updateMemoryStatus = async (command: CommandConfig) => {
   }
 
   if (matched.length === 1) {
-    setMarkerStatus(command, getMemoryUse(matched[0]));
+    setMarkerStatus(command, formatBytes(matched[0].memory));
     return;
   }
 
-  const total = matched.reduce((sum, item) => sum + (item.privateMemory ?? item.memory), 0);
+  const total = matched.reduce((sum, item) => sum + item.memory, 0);
   setMarkerStatus(command, `${formatBytes(total)} (${matched.length} matched)`);
 };
 
