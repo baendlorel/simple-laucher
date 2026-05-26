@@ -15,8 +15,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1
       mem-usage-ts:
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: ^0.1.4
+        version: 0.1.4
       smol-toml:
         specifier: ^1.6.1
         version: 1.6.1
@@ -1424,8 +1424,8 @@ packages:
   mdurl@2.0.0:
     resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
 
-  mem-usage-ts@0.1.2:
-    resolution: {integrity: sha512-SfzFxmWhYyMN7ZbfU9/SS0Q/dEg4LZlJ3qgEIgNbuItKPMLWqSVqHyyFfTkPYPAZ5k9P0P2Nowsm9sKftGghvQ==}
+  mem-usage-ts@0.1.4:
+    resolution: {integrity: sha512-NaVQXV6lCNK/mFa6xASjp/weUtckf7ugSVySTT6FgY/w3S20tMKJocrlIFZ0N2SXEvkAcA8uRSvAMc642ctRsQ==}
 
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
@@ -3200,7 +3200,7 @@ snapshots:
 
   mdurl@2.0.0: {}
 
-  mem-usage-ts@0.1.2: {}
+  mem-usage-ts@0.1.4: {}
 
   merge2@1.4.1: {}
 
