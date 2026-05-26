@@ -7,7 +7,7 @@ import { runCommandInTerminal } from './terminal.js';
 
 export const marker = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
-marker.text = '$(debug-start) ' + t('status-bar.text');
+marker.text = '$(debug-start)'; // + " " + t('status-bar.text');
 marker.command = 'simple-launcher.menu' satisfies FullCommandName;
 marker.show();
 

@@ -208,7 +208,8 @@
 
     .command-row {
       display: grid;
-      grid-template-columns: minmax(140px, 0.9fr) minmax(240px, 1.4fr) minmax(140px, 0.9fr) 36px;
+      grid-template-columns:
+        minmax(120px, 0.9fr) minmax(220px, 1.35fr) minmax(120px, 0.85fr) minmax(140px, 0.9fr) 36px;
       gap: 5px;
       align-items: center;
     }
@@ -236,7 +237,8 @@
 
     .header-row {
       display: grid;
-      grid-template-columns: minmax(140px, 0.9fr) minmax(240px, 1.4fr) minmax(140px, 0.9fr) 36px;
+      grid-template-columns:
+        minmax(120px, 0.9fr) minmax(220px, 1.35fr) minmax(120px, 0.85fr) minmax(140px, 0.9fr) 36px;
       gap: 5px;
       margin-bottom: 4px;
       color: var(--vscode-descriptionForeground);
@@ -297,10 +299,11 @@
         <h2>"__config-panel.commands__"</h2>
         <button id="add-command" class="secondary" type="button">"__config-panel.add-command__"</button>
       </div>
-      <div class="status">"__config-panel.monitor-target.help__"</div>
+      <div class="status" style="margin-bottom: 10px;">"__config-panel.monitor-target.help__"</div>
       <div class="header-row" aria-hidden="true">
         <div>"__config-panel.display-name__"</div>
         <div>"__config-panel.command__"</div>
+        <div>"__config-panel.cwd__"</div>
         <div>"__config-panel.monitor-target__"</div>
         <div></div>
       </div>
@@ -476,7 +479,10 @@
       };
 
       const isEmptyCommand = (command) =>
-        !command.displayName?.trim() && !command.command?.trim() && !command.monitorTarget?.trim();
+        !command.displayName?.trim() &&
+        !command.command?.trim() &&
+        !command.cwd?.trim() &&
+        !command.monitorTarget?.trim();
 
       const addCommand = () => {
         const lastCommand = commands[commands.length - 1];
@@ -505,6 +511,11 @@
           commandInput.value = command.command || '';
           commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
 
+          const cwd = document.createElement('input');
+          cwd.placeholder = '__config-panel.cwd__';
+          cwd.value = command.cwd || '';
+          cwd.addEventListener('input', () => updateCommand(index, 'cwd', cwd.value));
+
           const monitorTarget = document.createElement('input');
           monitorTarget.placeholder = '__config-panel.monitor-target__';
           monitorTarget.value = command.monitorTarget || '';
@@ -520,7 +531,7 @@
             renderCommands();
           });
 
-          row.append(displayName, commandInput, monitorTarget, remove);
+          row.append(displayName, commandInput, cwd, monitorTarget, remove);
           commandsEl.append(row);
         });
       };

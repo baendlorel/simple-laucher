@@ -18,6 +18,7 @@ const zh = {
   'config-panel.add-command': '新增命令',
   'config-panel.display-name': '展示名称',
   'config-panel.command': '命令',
+  'config-panel.cwd': '工作目录',
   'config-panel.monitor-target': '内存监控进程名（Regex 或 string）',
   'config-panel.monitor-target.help':
     'monitorTarget 会用两种方式匹配进程：先判断是否相等，再用 new RegExp(monitorTarget).test(processName) 判断。',
@@ -55,6 +56,7 @@ const en: typeof zh = {
   'config-panel.add-command': 'Add command',
   'config-panel.display-name': 'Display Name',
   'config-panel.command': 'Command',
+  'config-panel.cwd': 'Working Directory',
   'config-panel.monitor-target': 'Monitor Target (Regex or string)',
   'config-panel.monitor-target.help':
     'monitorTarget matches a process in two ways: direct equality first, then new RegExp(monitorTarget).test(processName).',
