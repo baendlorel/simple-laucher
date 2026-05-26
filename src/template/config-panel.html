@@ -314,233 +314,240 @@
 
   <script nonce="__nonce__">
     const vscode = acquireVsCodeApi();
-    const state = '__initialState__';
-    const importsEl = document.getElementById('imports');
-    const commandsEl = document.getElementById('commands');
-    const addCommandEl = document.getElementById('add-command');
-    const saveEl = document.getElementById('save');
-    const statusEl = document.getElementById('status');
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'init') {
+        return;
+      }
 
-    let commands = Array.isArray(state.commands) ? state.commands : [];
+      const state = event.data.state;
+      const importsEl = document.getElementById('imports');
+      const commandsEl = document.getElementById('commands');
+      const addCommandEl = document.getElementById('add-command');
+      const saveEl = document.getElementById('save');
+      const statusEl = document.getElementById('status');
 
-    const setStatus = (text) => {
-      statusEl.textContent = text;
-    };
+      let commands = Array.isArray(state.commands) ? state.commands : [];
 
-    const format = (template, ...args) =>
-      args.reduce((text, arg, index) => text.replace(`{${index}}`, String(arg)), template);
+      const setStatus = (text) => {
+        statusEl.textContent = text;
+      };
 
-    const sourceTitle = (source) => format('__config-panel.import-from__', source);
+      const format = (template, ...args) =>
+        args.reduce((text, arg, index) => text.replace(`{${index}}`, String(arg)), template);
 
-    const getSourceSelectedIds = (source) =>
-      [...document.querySelectorAll(`input[data-source="${source}"]:checked`)].map((input) => input.value);
+      const sourceTitle = (source) => format('__config-panel.import-from__', source);
 
-    const renderImports = () => {
-      importsEl.innerHTML = '';
-      importsEl.hidden = !state.showImports || !Array.isArray(state.sources) || state.sources.length === 0;
+      const getSourceSelectedIds = (source) =>
+        [...document.querySelectorAll(`input[data-source="${source}"]:checked`)].map((input) => input.value);
 
-      for (const group of state.sources) {
-        const details = document.createElement('details');
-        details.dataset.source = group.source;
-        details.open = true;
+      const renderImports = () => {
+        importsEl.innerHTML = '';
+        importsEl.hidden = !state.showImports || !Array.isArray(state.sources) || state.sources.length === 0;
 
-        const summary = document.createElement('summary');
-        const title = document.createElement('span');
-        const meta = document.createElement('span');
-        title.textContent = sourceTitle(group.source);
-        meta.className = 'summary-meta';
-        meta.textContent = format('__config-panel.found__', group.commands.length);
-        summary.append(title, meta);
+        for (const group of state.sources) {
+          const details = document.createElement('details');
+          details.dataset.source = group.source;
+          details.open = true;
 
-        const body = document.createElement('div');
-        body.className = 'import-body';
+          const summary = document.createElement('summary');
+          const title = document.createElement('span');
+          const meta = document.createElement('span');
+          title.textContent = sourceTitle(group.source);
+          meta.className = 'summary-meta';
+          meta.textContent = format('__config-panel.found__', group.commands.length);
+          summary.append(title, meta);
 
-        if (group.error) {
-          const error = document.createElement('div');
-          error.className = 'error';
-          error.textContent = group.error;
-          body.append(error);
-        }
+          const body = document.createElement('div');
+          body.className = 'import-body';
 
-        if (group.commands.length === 0) {
-          const empty = document.createElement('div');
-          empty.className = 'empty';
-          empty.textContent = format('__config-panel.no-commands-found__', group.source);
-          body.append(empty);
-        } else {
-          const actions = document.createElement('div');
-          actions.className = 'import-actions';
-
-          const selectAll = document.createElement('button');
-          selectAll.type = 'button';
-          selectAll.className = 'secondary';
-          selectAll.textContent = '__config-panel.select-all__';
-          selectAll.addEventListener('click', () => {
-            document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
-              input.checked = true;
-            });
-          });
-
-          const clear = document.createElement('button');
-          clear.type = 'button';
-          clear.className = 'secondary';
-          clear.textContent = '__config-panel.clear__';
-          clear.addEventListener('click', () => {
-            document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
-              input.checked = false;
-            });
-          });
-
-          const confirm = document.createElement('button');
-          confirm.type = 'button';
-          confirm.className = 'primary';
-          confirm.textContent = '__config-panel.import-selected__';
-          confirm.addEventListener('click', () => {
-            const selected = new Set(getSourceSelectedIds(group.source));
-            const imports = group.commands
-              .filter((command) => selected.has(command.id))
-              .map(({ id, sourceFile, ...command }) => command);
-
-            if (imports.length === 0) {
-              setStatus('__config-panel.no-commands-selected__');
-              return;
-            }
-
-            commands = [...commands, ...imports];
-            details.open = false;
-            renderCommands();
-            setStatus(format('__config-panel.imported__', imports.length));
-          });
-
-          actions.append(selectAll, clear, confirm);
-          body.append(actions);
-
-          const list = document.createElement('div');
-          list.className = 'candidate-list';
-
-          for (const candidate of group.commands) {
-            const row = document.createElement('label');
-            row.className = 'candidate';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = candidate.id;
-            checkbox.dataset.source = group.source;
-
-            const file = document.createElement('div');
-            file.className = 'file';
-            file.title = candidate.sourceFile;
-            file.textContent = candidate.sourceFile;
-
-            const name = document.createElement('div');
-            name.className = 'candidate-name';
-            name.title = candidate.displayName || '';
-            name.textContent = candidate.displayName || '';
-
-            const command = document.createElement('div');
-            command.className = 'candidate-command';
-            command.title = candidate.command;
-            command.textContent = candidate.command;
-
-            row.append(checkbox, file, name, command);
-            list.append(row);
+          if (group.error) {
+            const error = document.createElement('div');
+            error.className = 'error';
+            error.textContent = group.error;
+            body.append(error);
           }
 
-          body.append(list);
+          if (group.commands.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = format('__config-panel.no-commands-found__', group.source);
+            body.append(empty);
+          } else {
+            const actions = document.createElement('div');
+            actions.className = 'import-actions';
+
+            const selectAll = document.createElement('button');
+            selectAll.type = 'button';
+            selectAll.className = 'secondary';
+            selectAll.textContent = '__config-panel.select-all__';
+            selectAll.addEventListener('click', () => {
+              document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
+                input.checked = true;
+              });
+            });
+
+            const clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'secondary';
+            clear.textContent = '__config-panel.clear__';
+            clear.addEventListener('click', () => {
+              document.querySelectorAll(`input[data-source="${group.source}"]`).forEach((input) => {
+                input.checked = false;
+              });
+            });
+
+            const confirm = document.createElement('button');
+            confirm.type = 'button';
+            confirm.className = 'primary';
+            confirm.textContent = '__config-panel.import-selected__';
+            confirm.addEventListener('click', () => {
+              const selected = new Set(getSourceSelectedIds(group.source));
+              const imports = group.commands
+                .filter((command) => selected.has(command.id))
+                .map(({ id, sourceFile, ...command }) => command);
+
+              if (imports.length === 0) {
+                setStatus('__config-panel.no-commands-selected__');
+                return;
+              }
+
+              commands = [...commands, ...imports];
+              details.open = false;
+              renderCommands();
+              setStatus(format('__config-panel.imported__', imports.length));
+            });
+
+            actions.append(selectAll, clear, confirm);
+            body.append(actions);
+
+            const list = document.createElement('div');
+            list.className = 'candidate-list';
+
+            for (const candidate of group.commands) {
+              const row = document.createElement('label');
+              row.className = 'candidate';
+
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.value = candidate.id;
+              checkbox.dataset.source = group.source;
+
+              const file = document.createElement('div');
+              file.className = 'file';
+              file.title = candidate.sourceFile;
+              file.textContent = candidate.sourceFile;
+
+              const name = document.createElement('div');
+              name.className = 'candidate-name';
+              name.title = candidate.displayName || '';
+              name.textContent = candidate.displayName || '';
+
+              const command = document.createElement('div');
+              command.className = 'candidate-command';
+              command.title = candidate.command;
+              command.textContent = candidate.command;
+
+              row.append(checkbox, file, name, command);
+              list.append(row);
+            }
+
+            body.append(list);
+          }
+
+          details.append(summary, body);
+          importsEl.append(details);
+        }
+      };
+
+      const updateCommand = (index, key, value) => {
+        commands[index] = {
+          ...commands[index],
+          [key]: value,
+        };
+      };
+
+      const isEmptyCommand = (command) =>
+        !command.displayName?.trim() && !command.command?.trim() && !command.monitorTarget?.trim();
+
+      const addCommand = () => {
+        const lastCommand = commands[commands.length - 1];
+        if (lastCommand && isEmptyCommand(lastCommand)) {
+          return;
         }
 
-        details.append(summary, body);
-        importsEl.append(details);
-      }
-    };
-
-    const updateCommand = (index, key, value) => {
-      commands[index] = {
-        ...commands[index],
-        [key]: value,
+        commands = [...commands, { command: '' }];
+        renderCommands();
       };
-    };
 
-    const isEmptyCommand = (command) =>
-      !command.displayName?.trim() && !command.command?.trim() && !command.monitorTarget?.trim();
+      const renderCommands = () => {
+        commandsEl.innerHTML = '';
 
-    const addCommand = () => {
-      const lastCommand = commands[commands.length - 1];
-      if (lastCommand && isEmptyCommand(lastCommand)) {
-        return;
-      }
+        commands.forEach((command, index) => {
+          const row = document.createElement('div');
+          row.className = 'command-row';
 
-      commands = [...commands, { command: '' }];
-      renderCommands();
-    };
+          const displayName = document.createElement('input');
+          displayName.placeholder = '__config-panel.display-name__';
+          displayName.value = command.displayName || '';
+          displayName.addEventListener('input', () => updateCommand(index, 'displayName', displayName.value));
 
-    const renderCommands = () => {
-      commandsEl.innerHTML = '';
+          const commandInput = document.createElement('input');
+          commandInput.placeholder = '__config-panel.command__';
+          commandInput.value = command.command || '';
+          commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
 
-      commands.forEach((command, index) => {
-        const row = document.createElement('div');
-        row.className = 'command-row';
+          const monitorTarget = document.createElement('input');
+          monitorTarget.placeholder = '__config-panel.monitor-target__';
+          monitorTarget.value = command.monitorTarget || '';
+          monitorTarget.addEventListener('input', () => updateCommand(index, 'monitorTarget', monitorTarget.value));
 
-        const displayName = document.createElement('input');
-        displayName.placeholder = '__config-panel.display-name__';
-        displayName.value = command.displayName || '';
-        displayName.addEventListener('input', () => updateCommand(index, 'displayName', displayName.value));
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'danger remove';
+          remove.title = '__config-panel.remove-command__';
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            commands = commands.filter((_, commandIndex) => commandIndex !== index);
+            renderCommands();
+          });
 
-        const commandInput = document.createElement('input');
-        commandInput.placeholder = '__config-panel.command__';
-        commandInput.value = command.command || '';
-        commandInput.addEventListener('input', () => updateCommand(index, 'command', commandInput.value));
-
-        const monitorTarget = document.createElement('input');
-        monitorTarget.placeholder = '__config-panel.monitor-target__';
-        monitorTarget.value = command.monitorTarget || '';
-        monitorTarget.addEventListener('input', () => updateCommand(index, 'monitorTarget', monitorTarget.value));
-
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'danger remove';
-        remove.title = '__config-panel.remove-command__';
-        remove.textContent = '×';
-        remove.addEventListener('click', () => {
-          commands = commands.filter((_, commandIndex) => commandIndex !== index);
-          renderCommands();
+          row.append(displayName, commandInput, monitorTarget, remove);
+          commandsEl.append(row);
         });
+      };
 
-        row.append(displayName, commandInput, monitorTarget, remove);
-        commandsEl.append(row);
+      const save = () => {
+        vscode.postMessage({
+          type: 'save',
+          commands,
+        });
+        setStatus('__config-panel.saving__');
+      };
+
+      addCommandEl.addEventListener('click', addCommand);
+      saveEl.addEventListener('click', save);
+
+      window.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          save();
+        }
       });
-    };
 
-    const save = () => {
-      vscode.postMessage({
-        type: 'save',
-        commands,
+      window.addEventListener('message', (event) => {
+        if (event.data?.type !== 'saved') {
+          return;
+        }
+
+        commands = event.data.commands;
+        renderCommands();
+        setStatus('__config-panel.saved__');
       });
-      setStatus('__config-panel.saving__');
-    };
 
-    addCommandEl.addEventListener('click', addCommand);
-    saveEl.addEventListener('click', save);
-
-    window.addEventListener('keydown', (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-        event.preventDefault();
-        save();
-      }
-    });
-
-    window.addEventListener('message', (event) => {
-      if (event.data?.type !== 'saved') {
-        return;
-      }
-
-      commands = event.data.commands;
+      renderImports();
       renderCommands();
-      setStatus('__config-panel.saved__');
     });
 
-    renderImports();
-    renderCommands();
   </script>
 </body>
 

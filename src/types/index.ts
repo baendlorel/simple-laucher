@@ -24,5 +24,18 @@ export interface CommandConfig {
    */
   cwd?: string;
 
-  from?: 'package.json' | 'Cargo.toml';
+  from?: ImportSource;
+}
+
+export type ImportSource = 'package.json' | 'Cargo.toml';
+
+export interface ImportCommandCandidate extends CommandConfig {
+  id: string;
+  sourceFile: string;
+}
+
+export interface ImportSourceGroup {
+  source: ImportSource;
+  commands: ImportCommandCandidate[];
+  error: string | null;
 }

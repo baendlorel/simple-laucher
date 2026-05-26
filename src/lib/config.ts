@@ -1,38 +1,15 @@
-import type { CommandConfig } from '@/types/index.js';
+import type { CommandConfig, ImportCommandCandidate, ImportSource, ImportSourceGroup } from '@/types/index.js';
 import vscode from 'vscode';
 import { parse } from 'smol-toml';
+
 import configPanelTemplate from '@/template/config-panel.html?raw';
 import { t } from './l10n.js';
+import { readFileText } from './native.js';
+import path from 'node:path';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
-const textDecoder = new TextDecoder();
-type ImportSource = NonNullable<CommandConfig['from']>;
-
-interface ImportCommandCandidate extends CommandConfig {
-  id: string;
-  sourceFile: string;
-}
-
-interface ImportSourceGroup {
-  source: ImportSource;
-  commands: ImportCommandCandidate[];
-  error: string | null;
-}
-
-const readFileText = async (uri: vscode.Uri) => textDecoder.decode(await vscode.workspace.fs.readFile(uri));
-
-const tryReadFileText = async (uri: vscode.Uri) => {
-  try {
-    return await readFileText(uri);
-  } catch {
-    return null;
-  }
-};
 
 const normalizePath = (value: string) => value.replaceAll('\\', '/');
-
-const serializeStateForScript = (value: unknown) =>
-  JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
 const escapeHtml = (value: string) =>
   value
@@ -51,13 +28,7 @@ const getNonce = () => {
   return nonce;
 };
 
-const parsePackageJson = (content: string) =>
-  JSON.parse(content) as { name?: string; scripts?: Record<string, string> };
-
-const getRelativePath = (root: vscode.WorkspaceFolder, uri: vscode.Uri) => {
-  const relativePath = normalizePath(vscode.workspace.asRelativePath(uri, false));
-  return relativePath.startsWith(`${root.name}/`) ? relativePath.slice(root.name.length + 1) : relativePath;
-};
+const joinUri = (root: vscode.WorkspaceFolder, uri: vscode.Uri) => path.join(root.uri.path, uri.path);
 
 const createCandidateId = (source: ImportSource, sourceFile: string, displayName: string, command: string) =>
   `${source}:${sourceFile}:${displayName}:${command}`;
@@ -81,7 +52,7 @@ const ignoredPackageJsonDirs = new Set([
 ]);
 
 const isIgnoredPackageJson = (root: vscode.WorkspaceFolder, uri: vscode.Uri) =>
-  getRelativePath(root, uri)
+  joinUri(root, uri)
     .split('/')
     .some((segment) => ignoredPackageJsonDirs.has(segment));
 
@@ -94,8 +65,8 @@ const findPackageJsonFiles = async (root: vscode.WorkspaceFolder) => {
   return files
     .filter((uri) => !isIgnoredPackageJson(root, uri))
     .sort((a, b) => {
-      const aPath = getRelativePath(root, a);
-      const bPath = getRelativePath(root, b);
+      const aPath = joinUri(root, a);
+      const bPath = joinUri(root, b);
       if (aPath === 'package.json') {
         return -1;
       }
@@ -111,16 +82,16 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
     return [];
   }
 
-  const packageJsonFiles = await findPackageJsonFiles(root);
-  const packageCommands = await Promise.all(
-    packageJsonFiles.map(async (uri) => {
-      const content = await tryReadFileText(uri);
+  const packageJsons = await findPackageJsonFiles(root);
+  const result = await Promise.all(
+    packageJsons.map(async (uri) => {
+      const content = await readFileText(uri);
       if (!content) {
         return [];
       }
 
-      const data = parsePackageJson(content);
-      const sourceFile = getRelativePath(root, uri);
+      const data = JSON.parse(content) as { name?: string; scripts?: Record<string, string> };
+      const sourceFile = joinUri(root, uri);
       const packageDir = getDirectoryFromRelativeFile(sourceFile);
       const isRootPackage = sourceFile === 'package.json';
       const displayPrefix = data.name ?? packageDir;
@@ -138,7 +109,7 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
     }),
   );
 
-  return packageCommands.flat();
+  return result.flat();
 };
 
 const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Promise<ImportCommandCandidate[]> => {
@@ -147,7 +118,7 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
   }
 
   const rootCargoToml = vscode.Uri.joinPath(root.uri, 'Cargo.toml');
-  const content = await tryReadFileText(rootCargoToml);
+  const content = await readFileText(rootCargoToml);
   if (!content) {
     return [];
   }
@@ -175,7 +146,7 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
   const cargoTomlContents = await Promise.all(
     cargoTomlPaths.map(async (path) => ({
       path,
-      content: await tryReadFileText(path),
+      content: await readFileText(path),
     })),
   );
 
@@ -187,7 +158,7 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
         return null;
       }
 
-      const sourceFile = getRelativePath(root, cargoTomlPath);
+      const sourceFile = joinUri(root, cargoTomlPath);
       const command = `cargo run --bin ${data.package.name}`;
       return {
         id: createCandidateId('Cargo.toml', sourceFile, data.package.name, command),
@@ -255,22 +226,16 @@ const openConfigPanel = async (
   viewType: string,
   state: Awaited<ReturnType<typeof getImportPanelState>> | ReturnType<typeof getConfigPanelState>,
 ) => {
-  const panel = vscode.window.createWebviewPanel(
-    viewType,
-    t('config-panel.title'),
-    vscode.ViewColumn.One,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-    },
-  );
+  const panel = vscode.window.createWebviewPanel(viewType, t('config-panel.title'), vscode.ViewColumn.One, {
+    enableScripts: true,
+    retainContextWhenHidden: true,
+  });
 
   const nonce = getNonce();
   panel.webview.html = configPanelTemplate
     .replace(/['"]__([a-z-.]+)__['"]/g, (_, key) => escapeHtml(t(key)))
     .replaceAll('__nonce__', nonce)
-    .replaceAll(`__cspSource__`, panel.webview.cspSource)
-    .replace(`'__initialState__'`, serializeStateForScript(state));
+    .replaceAll(`__cspSource__`, panel.webview.cspSource);
 
   panel.webview.onDidReceiveMessage(
     async (message: { type?: string; commands?: CommandConfig[] }) => {
@@ -286,6 +251,8 @@ const openConfigPanel = async (
     undefined,
     context.subscriptions,
   );
+
+  panel.webview.postMessage({ type: 'init', state });
 };
 
 export const openImportCommandsPanel = async (context: vscode.ExtensionContext) => {
