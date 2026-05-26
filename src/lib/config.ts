@@ -5,7 +5,7 @@ import { parse } from 'smol-toml';
 
 import configPanelTemplate from '@/template/config-panel.html?raw';
 import { t } from './l10n.js';
-import { readFileText } from './native.js';
+import { errPop, readFileText } from './native.js';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
 
@@ -20,7 +20,7 @@ const findPackageJsonFiles = async (root: vscode.WorkspaceFolder) =>
     new vscode.RelativePattern(root, '**/{.git,.hg,.svn,.vscode,.vscode-test,node_modules,out,dist,build,coverage}/**'),
   );
 
-type CandidateGetter = (root: vscode.WorkspaceFolder | null) => Promise<ImportCommandCandidate[]>;
+type CandidateGetter = (root: vscode.WorkspaceFolder | undefined) => Promise<ImportCommandCandidate[]>;
 
 const getPackageJsonCandidates: CandidateGetter = async (root) => {
   if (!root) {
@@ -119,27 +119,21 @@ const getCargoTomlCandidates: CandidateGetter = async (root) => {
   return [...rootCommand, ...memberCommands];
 };
 
-const getImportSource = async (source: ImportSource, loader: CandidateGetter): Promise<ImportSourceGroup> => {
-  const result: ImportSourceGroup = { source, commands: [], error: null };
-  try {
-    result.commands = await loader(vscode.workspace.workspaceFolders?.[0] ?? null);
-  } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
-  }
-  return result;
-};
-
-const getImportPanelState = async () => {
-  const sources = [
-    await getImportSource('package.json', getPackageJsonCandidates),
-    await getImportSource('Cargo.toml', getCargoTomlCandidates),
-  ].filter((group) => group.commands.length > 0 || group.error);
-
-  return {
+const getPanelState = async (action: 'import' | 'config') => {
+  const result = {
     commands: load(),
     showImports: true,
-    sources,
+    sources: [] as ImportCommandCandidate[],
   };
+
+  if (action === 'import') {
+    const root = vscode.workspace.workspaceFolders?.[0];
+    const pj = (await getPackageJsonCandidates(root).catch(errPop)) ?? [];
+    const cargo = (await getCargoTomlCandidates(root).catch(errPop)) ?? [];
+    result.sources = [...pj, ...cargo];
+  }
+
+  return result;
 };
 
 const getConfigPanelState = () => ({
@@ -157,10 +151,10 @@ const serializeCommands = (commands: CommandConfig[]) =>
     from: command.from,
   }));
 
-const openConfigPanel = async (
-  context: vscode.ExtensionContext,
+const open = async (
+  cx: vscode.ExtensionContext,
   viewType: string,
-  state: Awaited<ReturnType<typeof getImportPanelState>> | ReturnType<typeof getConfigPanelState>,
+  state: Awaited<ReturnType<typeof getPanelState>> | ReturnType<typeof getConfigPanelState>,
 ) => {
   const panel = vscode.window.createWebviewPanel(viewType, t('config-panel.title'), vscode.ViewColumn.One, {
     enableScripts: true,
@@ -192,19 +186,17 @@ const openConfigPanel = async (
       vscode.window.showInformationMessage(t('config-panel.saved-message'));
     },
     undefined,
-    context.subscriptions,
+    cx.subscriptions,
   );
 
   panel.webview.postMessage({ type: 'init', state });
 };
 
-export const openImportCommandsPanel = async (context: vscode.ExtensionContext) => {
-  await openConfigPanel(context, 'simpleLauncherImportCommands', await getImportPanelState());
-};
+export const openImportCommands = async (cx: vscode.ExtensionContext) =>
+  open(cx, 'simpleLauncherImportCommands', await getPanelState());
 
-export const openConfigCommandsPanel = async (context: vscode.ExtensionContext) => {
-  await openConfigPanel(context, 'simpleLauncherConfigPanel', getConfigPanelState());
-};
+export const openConfigCommandsPanel = async (cx: vscode.ExtensionContext) =>
+  open(cx, 'simpleLauncherConfigPanel', getConfigPanelState());
 
 export const load = () => config().get<CommandConfig[]>('custom-commands', []);
 

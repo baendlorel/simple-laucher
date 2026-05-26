@@ -37,5 +37,4 @@ export interface ImportCommandCandidate extends CommandConfig {
 export interface ImportSourceGroup {
   source: ImportSource;
   commands: ImportCommandCandidate[];
-  error: string | null;
 }
