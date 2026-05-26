@@ -10,7 +10,8 @@ import { FullCommandName } from '@/types/global.js';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
 
-const joinUri = (root: vscode.WorkspaceFolder, uri: vscode.Uri) => path.join(root.uri.path, uri.path);
+const relativeUri = (root: vscode.WorkspaceFolder, uri: vscode.Uri) =>
+  path.relative(root.uri.fsPath, uri.fsPath) || '.';
 
 const createCandidateId = (source: ImportSource, sourceFile: string, displayName: string, command: string) =>
   `${source}:${sourceFile}:${displayName}:${command}`;
@@ -37,17 +38,18 @@ const getPackageJsonCandidates: CandidateGetter = async (root) => {
       }
 
       const data = JSON.parse(content) as { name?: string; scripts?: Record<string, string> };
-      const sourceFile = joinUri(root, uri);
+      const sourceFile = relativeUri(root, uri);
       const packageDir = path.dirname(sourceFile);
       const isRootPackage = sourceFile === 'package.json';
       const displayPrefix = data.name ?? packageDir;
+      const cwd = packageDir === '.' ? undefined : packageDir;
 
       return Object.entries(data.scripts ?? {}).map(
         ([key, value]): ImportCommandCandidate => ({
           id: createCandidateId('package.json', sourceFile, isRootPackage ? key : `${displayPrefix}:${key}`, value),
           displayName: isRootPackage ? key : `${displayPrefix}:${key}`,
           command: value,
-          cwd: packageDir,
+          cwd,
           from: 'package.json',
           sourceFile,
         }),
@@ -104,7 +106,7 @@ const getCargoTomlCandidates: CandidateGetter = async (root) => {
         return null;
       }
 
-      const sourceFile = joinUri(root, cargoTomlPath);
+      const sourceFile = relativeUri(root, cargoTomlPath);
       const command = `cargo run --bin ${data.package.name}`;
       return {
         id: createCandidateId('Cargo.toml', sourceFile, data.package.name, command),
@@ -124,14 +126,20 @@ const getPanelState = async (viewType: FullCommandName) => {
   const result = {
     commands: load(),
     showImports: true,
-    sources: [] as ImportCommandCandidate[],
+    sources: [] as ImportSourceGroup[],
   };
 
   if (viewType === 'simple-launcher.import-commands') {
     const root = vscode.workspace.workspaceFolders?.[0];
     const pj = (await getPackageJsonCandidates(root).catch(errPop)) ?? [];
     const cargo = (await getCargoTomlCandidates(root).catch(errPop)) ?? [];
-    result.sources = [...pj, ...cargo];
+    const sources = (
+      [
+        { source: 'package.json', commands: pj },
+        { source: 'Cargo.toml', commands: cargo },
+      ] satisfies ImportSourceGroup[]
+    ).filter((group) => group.commands.length > 0);
+    result.sources = sources;
   }
 
   return result;
@@ -145,21 +153,14 @@ export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullComma
   });
 
   const nonce = Math.random().toString(36).slice(2);
-  panel.webview.html = configPanelTemplate
-    .replace(/"__(config-panel\.[a-z-.]+)__"/g, (_, key) =>
-      t(key)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;'),
-    )
-    .replace(/'__(config-panel\.[a-z-.]+)__'/g, (_, key) => JSON.stringify(t(key)))
-    .replaceAll('__nonce__', nonce)
-    .replaceAll(`__cspSource__`, panel.webview.cspSource);
 
   panel.webview.onDidReceiveMessage(
     async (message: { type?: string; commands?: CommandConfig[] }) => {
+      if (message.type === 'ready') {
+        await panel.webview.postMessage({ type: 'init', state });
+        return;
+      }
+
       if (message.type !== 'save' || !Array.isArray(message.commands)) {
         return;
       }
@@ -181,7 +182,18 @@ export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullComma
     cx.subscriptions,
   );
 
-  panel.webview.postMessage({ type: 'init', state });
+  panel.webview.html = configPanelTemplate
+    .replace(/"__(config-panel\.[a-z-.]+)__"/g, (_, key) =>
+      t(key)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;'),
+    )
+    .replace(/'__(config-panel\.[a-z-.]+)__'/g, (_, key) => JSON.stringify(t(key)))
+    .replaceAll('__nonce__', nonce)
+    .replaceAll(`__cspSource__`, panel.webview.cspSource);
 };
 
 export const load = () => config().get<CommandConfig[]>('custom-commands', []);

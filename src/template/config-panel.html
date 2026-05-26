@@ -310,6 +310,7 @@
 
   <script nonce="__nonce__">
     const vscode = acquireVsCodeApi();
+
     window.addEventListener('message', (event) => {
       if (event.data?.type !== 'init') {
         return;
@@ -543,6 +544,8 @@
       renderImports();
       renderCommands();
     });
+
+    vscode.postMessage({ type: 'ready' });
 
   </script>
 </body>
