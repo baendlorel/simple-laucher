@@ -3,7 +3,7 @@
   "displayName": "Simple Launcher",
   "description": "A tool that helps you quickly launch commands while monitoring program memory usage",
   "description_zh": "一个可以帮助你快速启动命令的工具，同时可以监控程序内存用量",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "purpose": "vscode-extension",
   "publisher": "KasukabeTsumugi",
   "engines": {
@@ -99,36 +99,32 @@
           }
         },
         "simple-launcher.current-command": {
+          "type": [
+            "null",
+            "object"
+          ],
           "default": null,
           "description": "%configuration.current-command.description%",
-          "anyOf": [
-            {
-              "type": "null"
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "%configuration.current-command.command.description%"
             },
-            {
-              "type": "object",
-              "properties": {
-                "command": {
-                  "type": "string",
-                  "description": "%configuration.current-command.command.description%"
-                },
-                "displayName": {
-                  "type": "string",
-                  "description": "%configuration.current-command.displayName.description%"
-                },
-                "monitorTarget": {
-                  "type": "string",
-                  "description": "%configuration.current-command.monitorTarget.description%"
-                },
-                "cwd": {
-                  "type": "string",
-                  "description": "%configuration.current-command.cwd.description%"
-                }
-              },
-              "required": [
-                "command"
-              ]
+            "displayName": {
+              "type": "string",
+              "description": "%configuration.current-command.displayName.description%"
+            },
+            "monitorTarget": {
+              "type": "string",
+              "description": "%configuration.current-command.monitorTarget.description%"
+            },
+            "cwd": {
+              "type": "string",
+              "description": "%configuration.current-command.cwd.description%"
             }
+          },
+          "required": [
+            "command"
           ]
         }
       }

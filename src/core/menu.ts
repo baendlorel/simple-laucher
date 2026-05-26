@@ -6,7 +6,7 @@ import { t } from '@/lib/l10n.js';
 import { runCommandInTerminal } from './terminal.js';
 
 const runCurrentCommandId = 'simple-launcher.run-current-command';
-const launcherLabel = '简易启动 Simple Launch';
+const launcherLabel = t('status-bar.text');
 
 const getDisplayName = (command: CommandConfig) => command.displayName?.trim() || command.command;
 
