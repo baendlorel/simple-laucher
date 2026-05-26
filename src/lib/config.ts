@@ -1,83 +1,28 @@
 import type { CommandConfig, ImportCommandCandidate, ImportSource, ImportSourceGroup } from '@/types/index.js';
 import vscode from 'vscode';
+import path from 'node:path';
 import { parse } from 'smol-toml';
 
 import configPanelTemplate from '@/template/config-panel.html?raw';
 import { t } from './l10n.js';
 import { readFileText } from './native.js';
-import path from 'node:path';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
-
-const normalizePath = (value: string) => value.replaceAll('\\', '/');
-
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-
-const getNonce = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let nonce = '';
-  for (let i = 0; i < 32; i += 1) {
-    nonce += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return nonce;
-};
 
 const joinUri = (root: vscode.WorkspaceFolder, uri: vscode.Uri) => path.join(root.uri.path, uri.path);
 
 const createCandidateId = (source: ImportSource, sourceFile: string, displayName: string, command: string) =>
   `${source}:${sourceFile}:${displayName}:${command}`;
 
-const getDirectoryFromRelativeFile = (relativeFile: string) => {
-  const index = relativeFile.lastIndexOf('/');
-  return index === -1 ? '.' : relativeFile.slice(0, index);
-};
-
-const ignoredPackageJsonDirs = new Set([
-  '.git',
-  '.hg',
-  '.svn',
-  '.vscode',
-  '.vscode-test',
-  'node_modules',
-  'out',
-  'dist',
-  'build',
-  'coverage',
-]);
-
-const isIgnoredPackageJson = (root: vscode.WorkspaceFolder, uri: vscode.Uri) =>
-  joinUri(root, uri)
-    .split('/')
-    .some((segment) => ignoredPackageJsonDirs.has(segment));
-
-const findPackageJsonFiles = async (root: vscode.WorkspaceFolder) => {
-  const files = await vscode.workspace.findFiles(
+const findPackageJsonFiles = async (root: vscode.WorkspaceFolder) =>
+  vscode.workspace.findFiles(
     new vscode.RelativePattern(root, '**/package.json'),
     new vscode.RelativePattern(root, '**/{.git,.hg,.svn,.vscode,.vscode-test,node_modules,out,dist,build,coverage}/**'),
   );
 
-  return files
-    .filter((uri) => !isIgnoredPackageJson(root, uri))
-    .sort((a, b) => {
-      const aPath = joinUri(root, a);
-      const bPath = joinUri(root, b);
-      if (aPath === 'package.json') {
-        return -1;
-      }
-      if (bPath === 'package.json') {
-        return 1;
-      }
-      return aPath.localeCompare(bPath);
-    });
-};
+type CandidateGetter = (root: vscode.WorkspaceFolder | null) => Promise<ImportCommandCandidate[]>;
 
-const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Promise<ImportCommandCandidate[]> => {
+const getPackageJsonCandidates: CandidateGetter = async (root) => {
   if (!root) {
     return [];
   }
@@ -92,7 +37,7 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
 
       const data = JSON.parse(content) as { name?: string; scripts?: Record<string, string> };
       const sourceFile = joinUri(root, uri);
-      const packageDir = getDirectoryFromRelativeFile(sourceFile);
+      const packageDir = path.dirname(sourceFile);
       const isRootPackage = sourceFile === 'package.json';
       const displayPrefix = data.name ?? packageDir;
 
@@ -112,7 +57,7 @@ const getPackageJsonCandidates = async (root: vscode.WorkspaceFolder | null): Pr
   return result.flat();
 };
 
-const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Promise<ImportCommandCandidate[]> => {
+const getCargoTomlCandidates: CandidateGetter = async (root) => {
   if (!root) {
     return [];
   }
@@ -164,7 +109,7 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
         id: createCandidateId('Cargo.toml', sourceFile, data.package.name, command),
         displayName: data.package.name,
         command,
-        cwd: getDirectoryFromRelativeFile(sourceFile),
+        cwd: path.dirname(sourceFile),
         from: 'Cargo.toml',
         sourceFile,
       };
@@ -174,23 +119,14 @@ const getCargoTomlCandidates = async (root: vscode.WorkspaceFolder | null): Prom
   return [...rootCommand, ...memberCommands];
 };
 
-const getImportSource = async (
-  source: ImportSource,
-  loader: (root: vscode.WorkspaceFolder | null) => Promise<ImportCommandCandidate[]>,
-): Promise<ImportSourceGroup> => {
+const getImportSource = async (source: ImportSource, loader: CandidateGetter): Promise<ImportSourceGroup> => {
+  const result: ImportSourceGroup = { source, commands: [], error: null };
   try {
-    return {
-      source,
-      commands: await loader(vscode.workspace.workspaceFolders?.[0] ?? null),
-      error: null,
-    };
+    result.commands = await loader(vscode.workspace.workspaceFolders?.[0] ?? null);
   } catch (error) {
-    return {
-      source,
-      commands: [],
-      error: error instanceof Error ? error.message : String(error),
-    };
+    result.error = error instanceof Error ? error.message : String(error);
   }
+  return result;
 };
 
 const getImportPanelState = async () => {
@@ -231,9 +167,16 @@ const openConfigPanel = async (
     retainContextWhenHidden: true,
   });
 
-  const nonce = getNonce();
+  const nonce = Math.random().toString(36).slice(2);
   panel.webview.html = configPanelTemplate
-    .replace(/['"]__([a-z-.]+)__['"]/g, (_, key) => escapeHtml(t(key)))
+    .replace(/['"]__([a-z-.]+)__['"]/g, (_, key) =>
+      t(key)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;'),
+    )
     .replaceAll('__nonce__', nonce)
     .replaceAll(`__cspSource__`, panel.webview.cspSource);
 
