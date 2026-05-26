@@ -5,6 +5,7 @@ scripts
 artifact
 .artifact
 assets/example.png
+assets/icon-raw.png
 .oxlintrc.json
 
 pnpm-lock.yaml
