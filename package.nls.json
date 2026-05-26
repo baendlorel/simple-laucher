@@ -9,5 +9,10 @@
   "configuration.custom-commands.command.description": "The command to execute.",
   "configuration.custom-commands.displayName.description": "The display name shown in the UI. If omitted, the command itself is used.",
   "configuration.custom-commands.monitorTarget.description": "The process name or regex pattern string to monitor. If omitted, monitoring is disabled.",
-  "configuration.custom-commands.cwd.description": "The working directory used when executing the command."
+  "configuration.custom-commands.cwd.description": "The working directory used when executing the command.",
+  "configuration.current-command.description": "The last command selected to be shown in the status bar. Set to null to hide it.",
+  "configuration.current-command.command.description": "The command to execute.",
+  "configuration.current-command.displayName.description": "The display name shown in the status bar. If omitted, the command itself is used.",
+  "configuration.current-command.monitorTarget.description": "The process name or regex pattern string to monitor. If omitted, monitoring is disabled.",
+  "configuration.current-command.cwd.description": "The working directory used when executing the command."
 }

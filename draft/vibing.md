@@ -52,3 +52,10 @@
   - 增加一个配置项，叫做monitor-interval，表示监控的时间间隔，单位为秒，默认值为3秒；
 4、运行命令的方法是拉起一个终端并在其中执行命令，以方便用户Ctrl+C终止。并且重新运行命令的时候尽量复用它。
   - 在这个终端被终止的时候，statusbarItem上应该显示为`{displayName}: terminated`。终端相关内容写在core/terminal.ts里，整体可以到处一个函数，在register.ts里注册它
+
+---
+1、新增配置项叫current-command
+2、增加一个statusbaritem放在现在的statusbaritem旁边，现在的statusBarItem将改为仅展示"图标"。新的statusbaritem则会用于展示当前current-command。
+3、current-command的内容和commands的类型是一样的，它一般来说是commands的其中之一，在点击运行某个命令后，这个命令的config对象将会被复制一份存入current-command里。
+5、新的statusbaritem用来显示旧statusbaritem的“显示名+内存用量”。并且在没有运行的时候，点击它会运行这个命令。
+6、current-command可以为空，为空则不显示新的statusbaritem，且旧的statusbaritem会显示“图标+简易启动（中英都要）”

@@ -97,6 +97,39 @@
               "command"
             ]
           }
+        },
+        "simple-launcher.current-command": {
+          "default": null,
+          "description": "%configuration.current-command.description%",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "description": "%configuration.current-command.command.description%"
+                },
+                "displayName": {
+                  "type": "string",
+                  "description": "%configuration.current-command.displayName.description%"
+                },
+                "monitorTarget": {
+                  "type": "string",
+                  "description": "%configuration.current-command.monitorTarget.description%"
+                },
+                "cwd": {
+                  "type": "string",
+                  "description": "%configuration.current-command.cwd.description%"
+                }
+              },
+              "required": [
+                "command"
+              ]
+            }
+          ]
         }
       }
     }

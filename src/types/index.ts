@@ -27,6 +27,8 @@ export interface CommandConfig {
   from?: ImportSource;
 }
 
+export type CurrentCommandConfig = CommandConfig | null;
+
 export type ImportSource = 'package.json' | 'Cargo.toml';
 
 export interface ImportCommandCandidate extends CommandConfig {

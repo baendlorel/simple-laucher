@@ -1,4 +1,10 @@
-import type { CommandConfig, ImportCommandCandidate, ImportSource, ImportSourceGroup } from '@/types/index.js';
+import type {
+  CommandConfig,
+  CurrentCommandConfig,
+  ImportCommandCandidate,
+  ImportSource,
+  ImportSourceGroup,
+} from '@/types/index.js';
 import vscode from 'vscode';
 import path from 'node:path';
 import { parse } from 'smol-toml';
@@ -9,6 +15,27 @@ import { errPop, readFileText } from './native.js';
 import { FullCommandName } from '@/types/global.js';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
+
+const trimOrNull = (value: string | null | undefined) => value?.trim() || null;
+
+export const normalizeCommandConfig = (value: Partial<CommandConfig> | null | undefined): CurrentCommandConfig => {
+  if (!value) {
+    return null;
+  }
+
+  const command = trimOrNull(value.command);
+  if (!command) {
+    return null;
+  }
+
+  return {
+    command,
+    displayName: trimOrNull(value.displayName) ?? undefined,
+    monitorTarget: trimOrNull(value.monitorTarget) ?? undefined,
+    cwd: trimOrNull(value.cwd) ?? undefined,
+    from: value.from,
+  };
+};
 
 const relativeUri = (root: vscode.WorkspaceFolder, uri: vscode.Uri) =>
   path.relative(root.uri.fsPath, uri.fsPath) || '.';
@@ -166,14 +193,8 @@ export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullComma
       }
 
       const commands = message.commands
-        .map((v) => ({
-          displayName: v.displayName?.trim() || undefined,
-          command: v.command.trim(),
-          monitorTarget: v.monitorTarget?.trim() || undefined,
-          cwd: v.cwd?.trim() || undefined,
-          from: v.from,
-        }))
-        .filter((v) => v.command);
+        .map(normalizeCommandConfig)
+        .filter((value): value is CommandConfig => value !== null);
       await save(commands);
       await panel.webview.postMessage({ type: 'saved', commands });
       vscode.window.showInformationMessage(t('config-panel.saved-message'));
@@ -198,5 +219,13 @@ export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullComma
 
 export const load = () => config().get<CommandConfig[]>('custom-commands', []);
 
+export const loadCurrentCommand = (): CurrentCommandConfig =>
+  normalizeCommandConfig(config().get<CommandConfig | null>('current-command', null));
+
 export const save = (commands: CommandConfig[], configurationTarget = vscode.ConfigurationTarget.Workspace) =>
   config().update('custom-commands', commands, configurationTarget);
+
+export const saveCurrentCommand = (
+  command: CurrentCommandConfig,
+  configurationTarget = vscode.ConfigurationTarget.Workspace,
+) => config().update('current-command', normalizeCommandConfig(command), configurationTarget);

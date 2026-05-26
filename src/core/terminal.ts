@@ -1,7 +1,8 @@
 import type { CommandConfig } from '@/types/index.js';
 import vscode from 'vscode';
-import { getMemoryUsage, type MemoryUsage } from 'mem-usage-ts';
-import { marker } from './menu.js';
+import { getMemoryUsage } from 'mem-usage-ts';
+import { saveCurrentCommand } from '@/lib/config.js';
+import { setCurrentCommandStatus } from './menu.js';
 
 let activeCommand: CommandConfig | undefined;
 let activeExecution: vscode.TaskExecution | undefined;
@@ -55,17 +56,6 @@ const formatBytes = (bytes: number) => {
   return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 };
 
-const getStatusText = (command: CommandConfig, detail?: string) => {
-  const suffix = detail ? `: ${detail}` : '';
-  return `$(debug-start) ${getDisplayName(command)}${suffix}`;
-};
-
-const setMarkerStatus = (command: CommandConfig, detail?: string) => {
-  const displayName = getDisplayName(command);
-  marker.text = getStatusText(command, detail);
-  marker.tooltip = detail ? `${displayName}: ${detail}` : displayName;
-};
-
 const isMatch = (processName: string, monitorTarget: string) => {
   if (processName === monitorTarget) {
     return true;
@@ -80,29 +70,29 @@ const isMatch = (processName: string, monitorTarget: string) => {
 const updateMemoryStatus = async (command: CommandConfig) => {
   const monitorTarget = command.monitorTarget;
   if (!monitorTarget) {
-    setMarkerStatus(command);
+    setCurrentCommandStatus(command);
     return;
   }
 
   const usage = getMemoryUsage();
   if (!usage) {
-    setMarkerStatus(command, 'N/A');
+    setCurrentCommandStatus(command, 'N/A');
     return;
   }
 
   const matched = usage.filter((item) => isMatch(item.processName, monitorTarget));
   if (matched.length === 0) {
-    setMarkerStatus(command, 'N/A');
+    setCurrentCommandStatus(command, 'N/A');
     return;
   }
 
   if (matched.length === 1) {
-    setMarkerStatus(command, formatBytes(matched[0].memory));
+    setCurrentCommandStatus(command, formatBytes(matched[0].memory));
     return;
   }
 
   const total = matched.reduce((sum, item) => sum + item.memory, 0);
-  setMarkerStatus(command, `${formatBytes(total)} (${matched.length} matched)`);
+  setCurrentCommandStatus(command, `${formatBytes(total)} (${matched.length} matched)`);
 };
 
 const updateMemoryStatusSafe = async (command: CommandConfig, runId: number) => {
@@ -118,7 +108,7 @@ const updateMemoryStatusSafe = async (command: CommandConfig, runId: number) => 
     }
 
     console.error('Simple Launcher memory monitor failed', error);
-    setMarkerStatus(command, 'N/A');
+    setCurrentCommandStatus(command, 'N/A');
   }
 };
 
@@ -126,7 +116,7 @@ const startMonitor = (command: CommandConfig, runId: number) => {
   stopMonitor();
 
   if (!command.monitorTarget) {
-    setMarkerStatus(command);
+    setCurrentCommandStatus(command);
     return;
   }
 
@@ -180,21 +170,30 @@ const finishExecution = (execution: vscode.TaskExecution, detail: string) => {
   activeExecution = undefined;
 
   if (activeCommand) {
-    setMarkerStatus(activeCommand, detail);
+    setCurrentCommandStatus(activeCommand, detail, true);
   }
 };
 
 export const runCommandInTerminal = async (command: CommandConfig) => {
+  const currentCommand = {
+    command: command.command,
+    displayName: command.displayName,
+    monitorTarget: command.monitorTarget,
+    cwd: command.cwd,
+    from: command.from,
+  } satisfies CommandConfig;
+
+  await saveCurrentCommand(currentCommand);
   stopMonitor();
   activeRunId += 1;
   const runId = activeRunId;
-  activeCommand = command;
+  activeCommand = currentCommand;
   activeExecution = undefined;
-  setMarkerStatus(command, command.monitorTarget ? 'starting' : undefined);
-  startMonitor(command, runId);
+  setCurrentCommandStatus(currentCommand, currentCommand.monitorTarget ? 'starting' : undefined, false);
+  startMonitor(currentCommand, runId);
 
   try {
-    const execution = await vscode.tasks.executeTask(createTask(command));
+    const execution = await vscode.tasks.executeTask(createTask(currentCommand));
     if (activeRunId !== runId) {
       return;
     }
@@ -206,9 +205,11 @@ export const runCommandInTerminal = async (command: CommandConfig) => {
     activeCommand = undefined;
     activeRunId += 1;
     stopMonitor();
-    setMarkerStatus(command, 'failed to start');
+    setCurrentCommandStatus(currentCommand, 'failed to start', true);
     const message = error instanceof Error ? error.message : String(error);
-    void vscode.window.showErrorMessage(`Simple Launcher failed to start "${getDisplayName(command)}": ${message}`);
+    void vscode.window.showErrorMessage(
+      `Simple Launcher failed to start "${getDisplayName(currentCommand)}": ${message}`,
+    );
   }
 };
 
