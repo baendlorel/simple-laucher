@@ -1,5 +1,6 @@
 import type { CommandConfig } from '@/types/index.js';
 import vscode from 'vscode';
+import path from 'node:path';
 import { getMemoryUsage } from 'mem-usage-ts';
 import { saveCurrentCommand } from '@/lib/config.js';
 import { setCurrentCommandStatus } from './menu.js';
@@ -29,6 +30,27 @@ const getWorkspaceCwd = (command: CommandConfig) => {
   }
 
   return vscode.Uri.joinPath(root.uri, command.cwd).fsPath;
+};
+
+const getPathKey = (env: NodeJS.ProcessEnv) => Object.keys(env).find((key) => key.toLowerCase() === 'path') ?? 'PATH';
+
+const buildShellEnv = (cwd: string | undefined, workspaceFolder: vscode.WorkspaceFolder | undefined) => {
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  );
+  const pathKey = getPathKey(process.env);
+  const pathValue = env[pathKey] ?? '';
+  const executionRoot = cwd ?? workspaceFolder?.uri.fsPath;
+  const workspaceRoot = workspaceFolder?.uri.fsPath;
+  const binDirs = [executionRoot, workspaceRoot]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => path.join(value, 'node_modules', '.bin'))
+    .filter((value, index, all) => all.indexOf(value) === index);
+
+  env[pathKey] =
+    binDirs.length > 0 ? `${binDirs.join(path.delimiter)}${pathValue ? path.delimiter + pathValue : ''}` : pathValue;
+
+  return env;
 };
 
 const stopMonitor = () => {
@@ -135,6 +157,7 @@ const createTask = (command: CommandConfig) => {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   const scope = workspaceFolder ?? vscode.TaskScope.Workspace;
   const cwd = getWorkspaceCwd(command);
+  const env = buildShellEnv(cwd, workspaceFolder);
   const displayName = getDisplayName(command);
   const task = new vscode.Task(
     {
@@ -146,7 +169,7 @@ const createTask = (command: CommandConfig) => {
     scope,
     displayName,
     taskSource,
-    new vscode.ShellExecution(command.command, { cwd }),
+    new vscode.ShellExecution(command.command, { cwd, env }),
     [],
   );
   task.presentationOptions = {
