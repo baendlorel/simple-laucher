@@ -27,7 +27,7 @@
       "cwd": "${workspaceFolder}"
     }
   ],
-  "simple-launcher.monitor-interval": 3
+  "simple-launcher.monitor-interval": 1
 }
 ```
 
@@ -42,7 +42,7 @@
 | 设置 | 类型 | 默认值 | 说明 |
 |-----|------|--------|------|
 | `custom-commands` | 数组 | `[]` | 自定义命令列表 |
-| `monitor-interval` | 数字 | `3` | 内存监控间隔（秒） |
+| `monitor-interval` | 数字 | `1` | 内存监控间隔（秒） |
 
 ## 命令属性
 

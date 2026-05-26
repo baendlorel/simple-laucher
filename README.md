@@ -27,7 +27,7 @@ Add commands to your VS Code settings (`settings.json`):
       "cwd": "${workspaceFolder}"
     }
   ],
-  "simple-launcher.monitor-interval": 3
+  "simple-launcher.monitor-interval": 1
 }
 ```
 
@@ -42,7 +42,7 @@ Add commands to your VS Code settings (`settings.json`):
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `custom-commands` | array | `[]` | List of custom commands to execute |
-| `monitor-interval` | number | `3` | Memory monitoring interval in seconds |
+| `monitor-interval` | number | `1` | Memory monitoring interval in seconds |
 
 ## Command Properties
 

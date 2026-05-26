@@ -5,6 +5,7 @@ import { marker } from './menu.js';
 
 let activeCommand: CommandConfig | undefined;
 let activeExecution: vscode.TaskExecution | undefined;
+let activeRunId = 0;
 let monitorTimer: ReturnType<typeof setInterval> | undefined;
 
 const taskSource = 'Simple Launcher';
@@ -106,7 +107,24 @@ const updateMemoryStatus = async (command: CommandConfig) => {
   setMarkerStatus(command, `${formatBytes(total)} (${matched.length} matched)`);
 };
 
-const startMonitor = (command: CommandConfig, execution: vscode.TaskExecution) => {
+const updateMemoryStatusSafe = async (command: CommandConfig, runId: number) => {
+  if (activeRunId !== runId) {
+    return;
+  }
+
+  try {
+    await updateMemoryStatus(command);
+  } catch (error) {
+    if (activeRunId !== runId) {
+      return;
+    }
+
+    console.error('Simple Launcher memory monitor failed', error);
+    setMarkerStatus(command, 'N/A');
+  }
+};
+
+const startMonitor = (command: CommandConfig, runId: number) => {
   stopMonitor();
 
   if (!command.monitorTarget) {
@@ -114,14 +132,14 @@ const startMonitor = (command: CommandConfig, execution: vscode.TaskExecution) =
     return;
   }
 
-  void updateMemoryStatus(command);
+  void updateMemoryStatusSafe(command, runId);
   monitorTimer = setInterval(() => {
-    if (activeExecution !== execution) {
+    if (activeRunId !== runId) {
       stopMonitor();
       return;
     }
 
-    void updateMemoryStatus(command);
+    void updateMemoryStatusSafe(command, runId);
   }, getMonitorIntervalMs());
 };
 
@@ -160,6 +178,7 @@ const finishExecution = (execution: vscode.TaskExecution, detail: string) => {
   }
 
   stopMonitor();
+  activeRunId += 1;
   activeExecution = undefined;
 
   if (activeCommand) {
@@ -169,16 +188,25 @@ const finishExecution = (execution: vscode.TaskExecution, detail: string) => {
 
 export const runCommandInTerminal = async (command: CommandConfig) => {
   stopMonitor();
+  activeRunId += 1;
+  const runId = activeRunId;
   activeCommand = command;
   activeExecution = undefined;
   setMarkerStatus(command, command.monitorTarget ? 'starting' : undefined);
+  startMonitor(command, runId);
 
   try {
     const execution = await vscode.tasks.executeTask(createTask(command));
+    if (activeRunId !== runId) {
+      return;
+    }
     activeExecution = execution;
-    startMonitor(command, execution);
   } catch (error) {
+    if (activeRunId !== runId) {
+      return;
+    }
     activeCommand = undefined;
+    activeRunId += 1;
     stopMonitor();
     setMarkerStatus(command, 'failed to start');
     const message = error instanceof Error ? error.message : String(error);
