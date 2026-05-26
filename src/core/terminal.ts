@@ -1,5 +1,6 @@
 import type { CommandConfig } from '@/types/index.js';
 import vscode from 'vscode';
+import { getMemoryUsage, type MemoryUsage } from 'mem-usage-ts';
 import { marker } from './menu.js';
 
 let terminal: vscode.Terminal | undefined;
@@ -7,19 +8,6 @@ let terminalCwd: string | undefined;
 let replacingTerminal: vscode.Terminal | undefined;
 let activeCommand: CommandConfig | undefined;
 let monitorTimer: ReturnType<typeof setInterval> | undefined;
-
-interface MemoryUsageInfo {
-  name?: string;
-  processName?: string;
-  command?: string;
-  memoryUsage?: number | string;
-  memory?: number | string;
-  rss?: number | string;
-}
-
-interface MemoryUsageModule {
-  getMemoryUsage: () => MemoryUsageInfo[] | Promise<MemoryUsageInfo[]>;
-}
 
 const getDisplayName = (command: CommandConfig) => command.displayName?.trim() || command.command;
 
@@ -70,39 +58,6 @@ const stopMonitor = () => {
   monitorTimer = undefined;
 };
 
-const getProcessName = (item: MemoryUsageInfo) => item.processName ?? item.name ?? item.command ?? '';
-
-const getRawMemoryValue = (item: MemoryUsageInfo) => item.memoryUsage ?? item.memory ?? item.rss ?? 0;
-
-const parseMemoryValue = (value: number | string) => {
-  if (typeof value === 'number') {
-    return value;
-  }
-
-  const match = value.trim().match(/^([\d.]+)\s*([kmgt]?b?)?$/i);
-  if (!match) {
-    return Number.parseFloat(value);
-  }
-
-  const amount = Number.parseFloat(match[1]);
-  const unit = (match[2] || 'b').toLowerCase();
-  const multipliers: Record<string, number> = {
-    b: 1,
-    k: 1024,
-    kb: 1024,
-    m: 1024 ** 2,
-    mb: 1024 ** 2,
-    g: 1024 ** 3,
-    gb: 1024 ** 3,
-    t: 1024 ** 4,
-    tb: 1024 ** 4,
-  };
-
-  return amount * (multipliers[unit] ?? 1);
-};
-
-const getMemoryValue = (item: MemoryUsageInfo) => parseMemoryValue(getRawMemoryValue(item));
-
 const formatBytes = (bytes: number) => {
   if (!Number.isFinite(bytes)) {
     return 'N/A';
@@ -123,7 +78,6 @@ const isMatch = (processName: string, monitorTarget: string) => {
   if (processName === monitorTarget) {
     return true;
   }
-
   try {
     return new RegExp(monitorTarget).test(processName);
   } catch {
@@ -131,36 +85,30 @@ const isMatch = (processName: string, monitorTarget: string) => {
   }
 };
 
-const loadMemoryUsageModule = async () => {
-  try {
-    return (await import('mem-use-ts')) as MemoryUsageModule;
-  } catch {
-    return null;
-  }
-};
+const getMemoryUse = (item: MemoryUsage) => formatBytes(item.privateMemory ?? item.memory);
 
 const updateMemoryStatus = async (command: CommandConfig) => {
-  if (!command.monitorTarget) {
+  const monitorTarget = command.monitorTarget;
+  if (!monitorTarget) {
     marker.text = getDisplayName(command);
     return;
   }
 
-  const memoryUsageModule = await loadMemoryUsageModule();
-  if (!memoryUsageModule) {
+  const usage = getMemoryUsage();
+  if (!usage) {
     marker.text = `${getDisplayName(command)}: N/A`;
     return;
   }
 
-  const processes = await memoryUsageModule.getMemoryUsage();
-  const matchedProcesses = processes.filter((item) => isMatch(getProcessName(item), command.monitorTarget || ''));
-  if (matchedProcesses.length === 1) {
-    marker.text = `${getDisplayName(command)}: ${String(getRawMemoryValue(matchedProcesses[0]))}`;
+  const matched = usage.filter((item) => isMatch(item.processName, monitorTarget));
+  if (matched.length === 1) {
+    marker.text = `${command.displayName}: ${getMemoryUse(matched[0])}`;
     return;
   }
 
-  const totalMemory = matchedProcesses.reduce((sum, item) => sum + getMemoryValue(item), 0);
-  const suffix = matchedProcesses.length > 1 ? `(${matchedProcesses.length} matched)` : '';
-  marker.text = `${getDisplayName(command)}: ${formatBytes(totalMemory)}${suffix}`;
+  const total = matched.reduce((sum, item) => sum + (item.privateMemory ?? item.memory), 0);
+  const suffix = matched.length > 1 ? `(${matched.length} matched)` : '';
+  marker.text = `${getDisplayName(command)}: ${formatBytes(total)}${suffix}`;
 };
 
 const startMonitor = (command: CommandConfig) => {
@@ -190,24 +138,20 @@ export const runCommandInTerminal = (command: CommandConfig) => {
   startMonitor(command);
 };
 
-export const registerTerminal = (context: vscode.ExtensionContext) => {
-  context.subscriptions.push(
-    vscode.window.onDidCloseTerminal((closedTerminal) => {
-      if (closedTerminal === replacingTerminal) {
-        replacingTerminal = undefined;
-        return;
-      }
+export const registerTerminal = (closedTerminal: vscode.Terminal) => {
+  if (closedTerminal === replacingTerminal) {
+    replacingTerminal = undefined;
+    return;
+  }
 
-      if (closedTerminal !== terminal) {
-        return;
-      }
+  if (closedTerminal !== terminal) {
+    return;
+  }
 
-      terminal = undefined;
-      terminalCwd = undefined;
-      stopMonitor();
-      if (activeCommand) {
-        marker.text = `${getDisplayName(activeCommand)}: terminated`;
-      }
-    }),
-  );
+  terminal = undefined;
+  terminalCwd = undefined;
+  stopMonitor();
+  if (activeCommand) {
+    marker.text = `${getDisplayName(activeCommand)}: terminated`;
+  }
 };

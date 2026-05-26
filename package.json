@@ -125,6 +125,7 @@
   "dependencies": {
     "@types/vscode": "1.74.0",
     "is-wsl": "^3.1.1",
+    "mem-usage-ts": "^0.1.2",
     "smol-toml": "^1.6.1"
   }
 }

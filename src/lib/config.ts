@@ -6,6 +6,7 @@ import { parse } from 'smol-toml';
 import configPanelTemplate from '@/template/config-panel.html?raw';
 import { t } from './l10n.js';
 import { errPop, readFileText } from './native.js';
+import { FullCommandName } from '@/types/global.js';
 
 const config = () => vscode.workspace.getConfiguration('simple-launcher');
 
@@ -119,14 +120,14 @@ const getCargoTomlCandidates: CandidateGetter = async (root) => {
   return [...rootCommand, ...memberCommands];
 };
 
-const getPanelState = async (action: 'import' | 'config') => {
+const getPanelState = async (viewType: FullCommandName) => {
   const result = {
     commands: load(),
     showImports: true,
     sources: [] as ImportCommandCandidate[],
   };
 
-  if (action === 'import') {
+  if (viewType === 'simple-launcher.import-commands') {
     const root = vscode.workspace.workspaceFolders?.[0];
     const pj = (await getPackageJsonCandidates(root).catch(errPop)) ?? [];
     const cargo = (await getCargoTomlCandidates(root).catch(errPop)) ?? [];
@@ -136,26 +137,8 @@ const getPanelState = async (action: 'import' | 'config') => {
   return result;
 };
 
-const getConfigPanelState = () => ({
-  commands: load(),
-  showImports: false,
-  sources: [],
-});
-
-const serializeCommands = (commands: CommandConfig[]) =>
-  commands.map((command) => ({
-    displayName: command.displayName?.trim() || undefined,
-    command: command.command.trim(),
-    monitorTarget: command.monitorTarget?.trim() || undefined,
-    cwd: command.cwd?.trim() || undefined,
-    from: command.from,
-  }));
-
-const open = async (
-  cx: vscode.ExtensionContext,
-  viewType: string,
-  state: Awaited<ReturnType<typeof getPanelState>> | ReturnType<typeof getConfigPanelState>,
-) => {
+export const openPanel = async (cx: vscode.ExtensionContext, viewType: FullCommandName) => {
+  const state = await getPanelState(viewType);
   const panel = vscode.window.createWebviewPanel(viewType, t('config-panel.title'), vscode.ViewColumn.One, {
     enableScripts: true,
     retainContextWhenHidden: true,
@@ -180,7 +163,15 @@ const open = async (
         return;
       }
 
-      const commands = serializeCommands(message.commands).filter((command) => command.command);
+      const commands = message.commands
+        .map((v) => ({
+          displayName: v.displayName?.trim() || undefined,
+          command: v.command.trim(),
+          monitorTarget: v.monitorTarget?.trim() || undefined,
+          cwd: v.cwd?.trim() || undefined,
+          from: v.from,
+        }))
+        .filter((v) => v.command);
       await save(commands);
       await panel.webview.postMessage({ type: 'saved', commands });
       vscode.window.showInformationMessage(t('config-panel.saved-message'));
@@ -192,14 +183,7 @@ const open = async (
   panel.webview.postMessage({ type: 'init', state });
 };
 
-export const openImportCommands = async (cx: vscode.ExtensionContext) =>
-  open(cx, 'simpleLauncherImportCommands', await getPanelState());
-
-export const openConfigCommandsPanel = async (cx: vscode.ExtensionContext) =>
-  open(cx, 'simpleLauncherConfigPanel', getConfigPanelState());
-
 export const load = () => config().get<CommandConfig[]>('custom-commands', []);
 
-export const save = (commands: CommandConfig[], configurationTarget = vscode.ConfigurationTarget.Workspace) => {
-  return config().update('custom-commands', commands, configurationTarget);
-};
+export const save = (commands: CommandConfig[], configurationTarget = vscode.ConfigurationTarget.Workspace) =>
+  config().update('custom-commands', commands, configurationTarget);

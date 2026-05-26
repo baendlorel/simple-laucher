@@ -65,6 +65,5 @@ export const openMenu = async () => {
     return;
   }
 
-  const cmd = simpleLaunchCommands[result.index];
-  runCommandInTerminal(cmd);
+  runCommandInTerminal(simpleLaunchCommands[result.index]);
 };
